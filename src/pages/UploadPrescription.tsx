@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { CameraModal } from "@/components/CameraModal";
 
 interface Medicine {
   name: string;
@@ -24,6 +25,7 @@ const UploadPrescription = () => {
   const [showManualForm, setShowManualForm] = useState(false);
   const [medicineName, setMedicineName] = useState("");
   const [medicineDosage, setMedicineDosage] = useState("");
+  const [showCamera, setShowCamera] = useState(false);
 
   const handleFileSelect = async (file: File) => {
     if (!file.type.startsWith("image/")) {
@@ -98,42 +100,8 @@ const UploadPrescription = () => {
     fileInputRef.current?.click();
   };
 
-  const handleTakePhoto = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: "environment" } 
-      });
-      
-      const video = document.createElement("video");
-      video.srcObject = stream;
-      video.play();
-
-      // Wait for video to be ready
-      await new Promise((resolve) => {
-        video.onloadedmetadata = resolve;
-      });
-
-      const canvas = document.createElement("canvas");
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      canvas.getContext("2d")?.drawImage(video, 0, 0);
-
-      stream.getTracks().forEach(track => track.stop());
-
-      canvas.toBlob((blob) => {
-        if (blob) {
-          const file = new File([blob], "prescription.jpg", { type: "image/jpeg" });
-          handleFileSelect(file);
-        }
-      }, "image/jpeg");
-    } catch (error) {
-      console.error("Camera error:", error);
-      toast({
-        title: "Camera access denied",
-        description: "Please allow camera access to take photos",
-        variant: "destructive",
-      });
-    }
+  const handleTakePhoto = () => {
+    setShowCamera(true);
   };
 
   const handleAddMedicine = () => {
@@ -340,6 +308,12 @@ const UploadPrescription = () => {
             </div>
           </div>
         )}
+
+        <CameraModal
+          open={showCamera}
+          onClose={() => setShowCamera(false)}
+          onCapture={handleFileSelect}
+        />
       </div>
     </div>
   );
