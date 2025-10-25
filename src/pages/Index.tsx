@@ -1,10 +1,40 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Search, Bell, FileText, MapPin, Pill, Home, ScanLine, Activity, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import QuickActionCard from "@/components/QuickActionCard";
 import MedicationCard from "@/components/MedicationCard";
 import ReminderCard from "@/components/ReminderCard";
+import { supabase } from "@/integrations/supabase/client";
+import { Session } from "@supabase/supabase-js";
 
 const Index = () => {
+  const navigate = useNavigate();
+  const [session, setSession] = useState<Session | null>(null);
+
+  useEffect(() => {
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+      }
+    );
+
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (!session) {
+        navigate("/onboarding");
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  if (!session) {
+    return null;
+  }
+
   return (
     <div className="min-h-screen bg-background pb-20">
       {/* Header */}
