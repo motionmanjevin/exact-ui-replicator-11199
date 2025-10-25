@@ -111,7 +111,10 @@ const Index = () => {
             <Home className="w-6 h-6" />
             <span className="text-xs font-medium">Home</span>
           </button>
-          <button className="flex flex-col items-center gap-1 text-muted-foreground">
+          <button 
+            onClick={() => navigate("/upload-prescription")}
+            className="flex flex-col items-center gap-1 text-muted-foreground"
+          >
             <ScanLine className="w-6 h-6" />
             <span className="text-xs">Scan</span>
           </button>
