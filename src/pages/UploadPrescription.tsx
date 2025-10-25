@@ -4,12 +4,14 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Medicine {
   name: string;
   dosage: string;
+  selected?: boolean;
 }
 
 const UploadPrescription = () => {
@@ -144,7 +146,7 @@ const UploadPrescription = () => {
       return;
     }
 
-    setMedicines([...medicines, { name: medicineName, dosage: medicineDosage }]);
+    setMedicines([...medicines, { name: medicineName, dosage: medicineDosage, selected: true }]);
     setMedicineName("");
     setMedicineDosage("");
     setShowManualForm(false);
@@ -152,6 +154,25 @@ const UploadPrescription = () => {
       title: "Medicine added",
       description: "Medicine has been added to the list",
     });
+  };
+
+  const toggleMedicineSelection = (index: number) => {
+    setMedicines(medicines.map((med, i) => 
+      i === index ? { ...med, selected: !med.selected } : med
+    ));
+  };
+
+  const handleSearchPharmacies = () => {
+    const selectedMedicines = medicines.filter(med => med.selected);
+    if (selectedMedicines.length === 0) {
+      toast({
+        title: "No medicines selected",
+        description: "Please select at least one medicine to search",
+        variant: "destructive",
+      });
+      return;
+    }
+    navigate("/medicine-availability", { state: { medicines: selectedMedicines } });
   };
 
   const handleCancel = () => {
@@ -244,14 +265,29 @@ const UploadPrescription = () => {
 
           {/* Extracted Medicines List */}
           {medicines.length > 0 && (
-            <div className="space-y-3 mb-4">
-              {medicines.map((medicine, index) => (
-                <div key={index} className="bg-card rounded-2xl p-4 shadow-sm">
-                  <p className="font-medium">{medicine.name}</p>
-                  <p className="text-sm text-muted-foreground mt-1">{medicine.dosage}</p>
-                </div>
-              ))}
-            </div>
+            <>
+              <div className="space-y-3 mb-4">
+                {medicines.map((medicine, index) => (
+                  <div key={index} className="bg-card rounded-2xl p-4 shadow-sm flex items-start gap-3">
+                    <Checkbox
+                      checked={medicine.selected ?? true}
+                      onCheckedChange={() => toggleMedicineSelection(index)}
+                      className="mt-1"
+                    />
+                    <div className="flex-1">
+                      <p className="font-medium">{medicine.name}</p>
+                      <p className="text-sm text-muted-foreground mt-1">{medicine.dosage}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <Button
+                onClick={handleSearchPharmacies}
+                className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                Search Pharmacies
+              </Button>
+            </>
           )}
 
           {/* Manual Form */}
