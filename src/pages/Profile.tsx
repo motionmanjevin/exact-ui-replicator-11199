@@ -172,35 +172,9 @@ const Profile = () => {
             <ChevronRight className="w-5 h-5 text-muted-foreground" />
           </button>
 
-          <button className="w-full flex items-center gap-3 p-4 hover:bg-muted/50 transition-colors">
-            <div className="p-2 bg-purple-500/10 rounded-lg">
-              <Shield className="w-5 h-5 text-purple-500" />
-            </div>
-            <div className="flex-1 text-left">
-              <p className="font-medium">Privacy & Security</p>
-              <p className="text-sm text-muted-foreground">Manage your data</p>
-            </div>
-            <ChevronRight className="w-5 h-5 text-muted-foreground" />
-          </button>
         </div>
       </section>
 
-      {/* Support */}
-      <section className="px-6 mb-6">
-        <h2 className="text-sm text-muted-foreground mb-3">Support</h2>
-        <div className="bg-card rounded-2xl shadow-[var(--shadow-card)]">
-          <button className="w-full flex items-center gap-3 p-4 hover:bg-muted/50 transition-colors rounded-2xl">
-            <div className="p-2 bg-orange-500/10 rounded-lg">
-              <HelpCircle className="w-5 h-5 text-orange-500" />
-            </div>
-            <div className="flex-1 text-left">
-              <p className="font-medium">Help Center</p>
-              <p className="text-sm text-muted-foreground">FAQs and support</p>
-            </div>
-            <ChevronRight className="w-5 h-5 text-muted-foreground" />
-          </button>
-        </div>
-      </section>
 
       {/* Logout Button */}
       <div className="px-6 mb-6">
