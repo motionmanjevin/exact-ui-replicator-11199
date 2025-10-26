@@ -65,7 +65,7 @@ const Index = () => {
         <div className="grid grid-cols-3 gap-4 mb-6">
           <QuickActionCard icon={FileText} label="My Prescriptions" />
           <QuickActionCard icon={MapPin} label="Nearby Pharmacies" />
-          <QuickActionCard icon={Pill} label="AI Drug Info" />
+          <QuickActionCard icon={Pill} label="AI Drug Info" onClick={() => navigate("/drug-info")} />
         </div>
 
         {/* Current Medications */}
