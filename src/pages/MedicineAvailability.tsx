@@ -10,21 +10,26 @@ interface Medicine {
   dosage: string;
 }
 
+interface MedicineAvailability {
+  name: string;
+  available: boolean;
+  price: string;
+  alternative?: {
+    medicine: string;
+    reason: string;
+  };
+}
+
 interface Pharmacy {
   id: string;
   name: string;
-  distance: string;
-  available: boolean;
-  price: string;
-  medicineName?: string;
+  distance: number;
+  distanceText: string;
+  medicines: MedicineAvailability[];
   image?: string;
   phone?: string;
   hours?: string;
   address?: string;
-  recommendation?: {
-    medicine: string;
-    reason: string;
-  };
 }
 
 const MedicineAvailability = () => {
@@ -39,41 +44,74 @@ const MedicineAvailability = () => {
   useEffect(() => {
     // Simulate fetching pharmacy data
     setTimeout(() => {
-      const firstMedicine = medicines[0]?.name || "Medicine";
-      setPharmacies([
-        {
-          id: "1",
-          name: "Soul Health Pharmacy",
-          distance: "1.2 km away",
-          available: true,
-          price: "GH₵ 8.50",
-          medicineName: firstMedicine,
-          image: "/src/assets/soul-health-pharmacy.jpg",
-          phone: "+233 30 298 3045",
-          hours: "8:00 AM - 4:00 PM",
-          address: "Madina, Greater Accra Region",
-        },
-        {
-          id: "2",
-          name: "Care Pharmacy",
-          distance: "3.1 km away",
-          available: false,
-          price: "GH₵ 8.00",
-          medicineName: firstMedicine,
-          recommendation: {
-            medicine: "Acetaminophen 500mg",
-            reason: "Same active compound",
-          },
-        },
-        {
-          id: "3",
-          name: "HealthPlus Pharmacy",
-          distance: "4.5 km away",
-          available: true,
-          price: "GH₵ 9.00",
-          medicineName: firstMedicine,
-        },
-      ]);
+      const pharmacyNames = [
+        "Soul Health Pharmacy",
+        "Care Pharmacy", 
+        "HealthPlus Pharmacy",
+        "MediCare Center",
+        "Wellness Pharmacy",
+        "City Drug Store",
+        "Green Cross Pharmacy",
+        "Hope Medical Pharmacy"
+      ];
+
+      const addresses = [
+        "Madina, Greater Accra Region",
+        "East Legon, Greater Accra Region",
+        "Osu, Greater Accra Region",
+        "Labone, Greater Accra Region",
+        "Achimota, Greater Accra Region",
+        "Tema, Greater Accra Region",
+        "Teshie, Greater Accra Region",
+        "Kaneshie, Greater Accra Region"
+      ];
+
+      const alternativeDrugs: Record<string, { medicine: string; reason: string }> = {
+        "Paracetamol": { medicine: "Acetaminophen 500mg", reason: "Same active compound, equal effectiveness" },
+        "Ibuprofen": { medicine: "Naproxen 250mg", reason: "Similar NSAID, comparable pain relief" },
+        "Amoxicillin": { medicine: "Augmentin 625mg", reason: "Enhanced antibiotic with similar spectrum" },
+        "Omeprazole": { medicine: "Esomeprazole 20mg", reason: "Same drug class, equivalent acid reduction" },
+        "Metformin": { medicine: "Glucophage XR 500mg", reason: "Extended release formulation of same drug" },
+        "Cetirizine": { medicine: "Loratadine 10mg", reason: "Alternative antihistamine with less drowsiness" },
+      };
+
+      const simulatedPharmacies: Pharmacy[] = pharmacyNames.slice(0, 6).map((name, index) => {
+        const distance = (index + 1) * 1.2 + Math.random() * 0.5;
+        const hasAllMedicines = Math.random() > 0.4; // 60% chance of having all medicines
+        
+        const medicineAvailability: MedicineAvailability[] = medicines.map(medicine => {
+          const isAvailable = hasAllMedicines || Math.random() > 0.3;
+          const basePrice = 5 + Math.random() * 10;
+          const priceVariation = 1 + (Math.random() * 0.4 - 0.2); // ±20% variation
+          
+          // For closest pharmacy (index 0), if medicine not available, suggest alternative
+          const shouldSuggestAlternative = index === 0 && !isAvailable && alternativeDrugs[medicine.name];
+          
+          return {
+            name: medicine.name,
+            available: isAvailable,
+            price: `GH₵ ${(basePrice * priceVariation).toFixed(2)}`,
+            alternative: shouldSuggestAlternative ? alternativeDrugs[medicine.name] : undefined
+          };
+        });
+
+        return {
+          id: `${index + 1}`,
+          name,
+          distance,
+          distanceText: `${distance.toFixed(1)} km away`,
+          medicines: medicineAvailability,
+          image: index === 0 ? "/src/assets/soul-health-pharmacy.jpg" : undefined,
+          phone: `+233 ${20 + index} ${Math.floor(Math.random() * 900 + 100)} ${Math.floor(Math.random() * 9000 + 1000)}`,
+          hours: index % 2 === 0 ? "8:00 AM - 8:00 PM" : "24 Hours",
+          address: addresses[index]
+        };
+      });
+
+      // Sort by distance
+      simulatedPharmacies.sort((a, b) => a.distance - b.distance);
+      
+      setPharmacies(simulatedPharmacies);
       setIsLoading(false);
     }, 1000);
   }, [medicines]);
@@ -151,53 +189,83 @@ const MedicineAvailability = () => {
               Nearby Pharmacies ({filteredPharmacies.length})
             </h2>
             <div className="space-y-3">
-              {filteredPharmacies.map((pharmacy) => (
-                <div
-                  key={pharmacy.id}
-                  className="bg-card rounded-2xl p-4 shadow-sm border border-border"
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <h3 className="font-semibold">{pharmacy.name}</h3>
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
-                        <MapPin className="w-3 h-3" />
-                        <span>{pharmacy.distance}</span>
-                      </div>
-                    </div>
-                    <Badge
-                      variant={pharmacy.available ? "default" : "destructive"}
-                      className={pharmacy.available ? "bg-green-500/10 text-green-600 border-green-200" : ""}
-                    >
-                      {pharmacy.medicineName || "Medicine"}
-                    </Badge>
-                  </div>
+              {filteredPharmacies.map((pharmacy) => {
+                const availableCount = pharmacy.medicines.filter(m => m.available).length;
+                const totalCount = pharmacy.medicines.length;
+                const hasAll = availableCount === totalCount;
+                const hasAlternatives = pharmacy.medicines.some(m => m.alternative);
 
-                  {pharmacy.recommendation && (
-                    <div className="bg-orange-50 border border-orange-200 rounded-xl p-3 mb-3">
-                      <div className="flex items-start gap-2">
-                        <Sparkles className="w-4 h-4 text-orange-600 mt-0.5 flex-shrink-0" />
-                        <div>
-                          <p className="text-sm font-medium text-orange-900">AI Recommendation</p>
-                          <p className="text-sm text-orange-800 mt-0.5">{pharmacy.recommendation.medicine}</p>
-                          <p className="text-xs text-orange-600 mt-0.5">{pharmacy.recommendation.reason}</p>
+                return (
+                  <div
+                    key={pharmacy.id}
+                    className="bg-card rounded-2xl p-4 shadow-sm border border-border"
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <h3 className="font-semibold">{pharmacy.name}</h3>
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
+                          <MapPin className="w-3 h-3" />
+                          <span>{pharmacy.distanceText}</span>
                         </div>
                       </div>
+                      <Badge
+                        variant={hasAll ? "default" : "secondary"}
+                        className={hasAll ? "bg-green-500/10 text-green-600 border-green-200" : ""}
+                      >
+                        {availableCount}/{totalCount} Available
+                      </Badge>
                     </div>
-                  )}
 
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs text-muted-foreground">Price</p>
-                      <p className="font-semibold">{pharmacy.price}</p>
+                    {/* Medicine Tags */}
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {pharmacy.medicines.map((med, idx) => (
+                        <Badge
+                          key={idx}
+                          variant={med.available ? "outline" : "secondary"}
+                          className={med.available ? "bg-green-50 text-green-700 border-green-300" : "bg-muted text-muted-foreground"}
+                        >
+                          {med.name} {med.available ? `• ${med.price}` : "• Not available"}
+                        </Badge>
+                      ))}
                     </div>
-                    <Button
-                      onClick={() => navigate('/pharmacy-details', { state: { pharmacy } })}
-                    >
-                      Details
-                    </Button>
+
+                    {/* AI Recommendations */}
+                    {hasAlternatives && (
+                      <div className="space-y-2 mb-3">
+                        {pharmacy.medicines.filter(m => m.alternative).map((med, idx) => (
+                          <div key={idx} className="bg-orange-50 border border-orange-200 rounded-xl p-3">
+                            <div className="flex items-start gap-2">
+                              <Sparkles className="w-4 h-4 text-orange-600 mt-0.5 flex-shrink-0" />
+                              <div>
+                                <p className="text-sm font-medium text-orange-900">AI Recommendation for {med.name}</p>
+                                <p className="text-sm text-orange-800 mt-0.5">{med.alternative!.medicine}</p>
+                                <p className="text-xs text-orange-600 mt-0.5">{med.alternative!.reason}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs text-muted-foreground">Total Price</p>
+                        <p className="font-semibold">
+                          GH₵ {pharmacy.medicines
+                            .filter(m => m.available)
+                            .reduce((sum, m) => sum + parseFloat(m.price.replace("GH₵ ", "")), 0)
+                            .toFixed(2)}
+                        </p>
+                      </div>
+                      <Button
+                        onClick={() => navigate('/pharmacy-details', { state: { pharmacy } })}
+                      >
+                        Details
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
