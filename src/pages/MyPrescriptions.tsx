@@ -1,16 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Eye, Trash2 } from "lucide-react";
+import { ArrowLeft, Eye, Trash2, Calendar, FileText, Pill } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,6 +14,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 
 interface Prescription {
@@ -118,63 +112,94 @@ const MyPrescriptions = () => {
           </div>
         ) : prescriptions.length === 0 ? (
           <div className="text-center py-12">
+            <div className="mx-auto w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
+              <FileText className="w-8 h-8 text-muted-foreground" />
+            </div>
             <p className="text-muted-foreground mb-4">No prescriptions found</p>
             <Button onClick={() => navigate("/upload-prescription")}>
               Upload Prescription
             </Button>
           </div>
         ) : (
-          <div className="bg-card rounded-2xl shadow-[var(--shadow-card)] overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Medicines</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Notes</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {prescriptions.map((prescription) => (
-                  <TableRow key={prescription.id}>
-                    <TableCell className="font-medium">
-                      {prescription.prescription_name || "Untitled"}
-                    </TableCell>
-                    <TableCell className="max-w-xs truncate">
-                      {getMedicinesList(prescription.medicines)}
-                    </TableCell>
-                    <TableCell>
-                      {format(new Date(prescription.created_at), "MMM dd, yyyy")}
-                    </TableCell>
-                    <TableCell className="max-w-xs truncate">
-                      {prescription.notes || "-"}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        {prescription.prescription_image_url && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => window.open(prescription.prescription_image_url!, "_blank")}
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setDeleteId(prescription.id)}
-                        >
-                          <Trash2 className="w-4 h-4 text-destructive" />
-                        </Button>
+          <>
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-foreground">Total Prescriptions</h2>
+                <p className="text-3xl font-bold text-primary">{prescriptions.length}</p>
+              </div>
+              <Button onClick={() => navigate("/upload-prescription")}>
+                Upload New
+              </Button>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {prescriptions.map((prescription) => (
+                <Card key={prescription.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <CardTitle className="text-lg mb-1">
+                          {prescription.prescription_name || "Untitled Prescription"}
+                        </CardTitle>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Calendar className="w-4 h-4" />
+                          {format(new Date(prescription.created_at), "MMM dd, yyyy")}
+                        </div>
                       </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                      <Badge variant="secondary" className="ml-2">
+                        {Array.isArray(prescription.medicines) ? prescription.medicines.length : 0} meds
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Pill className="w-4 h-4 text-primary" />
+                        <span className="text-sm font-medium">Medicines</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {getMedicinesList(prescription.medicines)}
+                      </p>
+                    </div>
+
+                    {prescription.notes && (
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <FileText className="w-4 h-4 text-primary" />
+                          <span className="text-sm font-medium">Notes</span>
+                        </div>
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {prescription.notes}
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="flex gap-2 pt-2">
+                      {prescription.prescription_image_url && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => window.open(prescription.prescription_image_url!, "_blank")}
+                        >
+                          <Eye className="w-4 h-4 mr-2" />
+                          View
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setDeleteId(prescription.id)}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </>
         )}
       </div>
 
