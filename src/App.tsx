@@ -10,6 +10,7 @@ import Login from "./pages/Login";
 import UploadPrescription from "./pages/UploadPrescription";
 import MedicineAvailability from "./pages/MedicineAvailability";
 import PharmacyDetails from "./pages/PharmacyDetails";
+import Checkout from "./pages/Checkout";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/upload-prescription" element={<UploadPrescription />} />
           <Route path="/medicine-availability" element={<MedicineAvailability />} />
           <Route path="/pharmacy-details" element={<PharmacyDetails />} />
+          <Route path="/checkout" element={<Checkout />} />
           <Route path="/" element={<Index />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

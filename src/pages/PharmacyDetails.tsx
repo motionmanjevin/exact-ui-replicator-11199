@@ -32,8 +32,7 @@ const PharmacyDetails = () => {
   }
 
   const handleOrderNow = () => {
-    // Handle order logic here
-    console.log("Ordering from", pharmacy.name);
+    navigate('/checkout', { state: { pharmacy } });
   };
 
   const handleViewMap = () => {
