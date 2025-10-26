@@ -19,22 +19,55 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
 
-    // Format prescription data
+    // Format prescription data with full details
     const prescriptionContext = prescriptions.map((p: any) => {
-      return `- ${p.prescription_name || 'Unnamed prescription'} (uploaded: ${new Date(p.created_at).toLocaleDateString()})`;
+      let context = `\nPrescription: ${p.prescription_name || 'Unnamed prescription'}`;
+      context += `\n  Uploaded: ${new Date(p.created_at).toLocaleDateString()}`;
+      
+      // Include medicines details if available
+      if (p.medicines && Array.isArray(p.medicines)) {
+        context += `\n  Medications:`;
+        p.medicines.forEach((med: any) => {
+          context += `\n    - ${med.name || 'Unknown medication'}`;
+          if (med.dosage) context += ` | Dosage: ${med.dosage}`;
+          if (med.frequency) context += ` | Frequency: ${med.frequency}`;
+          if (med.duration) context += ` | Duration: ${med.duration}`;
+          if (med.instructions) context += ` | Instructions: ${med.instructions}`;
+        });
+      }
+      
+      // Include notes if available
+      if (p.notes) {
+        context += `\n  Notes: ${p.notes}`;
+      }
+      
+      return context;
     }).join('\n');
 
     // Build conversation messages
     const messages = [
       {
         role: "system",
-        content: `You are a helpful medical assistant that answers questions about prescriptions. You have access to the following prescriptions:
+        content: `You are a helpful medical assistant that answers questions about prescriptions. You have access to the user's complete prescription details:
 
 ${prescriptionContext}
 
-Provide clear, helpful answers about these prescriptions. If asked about interactions, side effects, dosages, or general medication questions, provide accurate medical information. Always remind users to consult their healthcare provider for medical advice.
+Your role:
+- Answer questions about specific medications, their dosages, frequencies, and instructions
+- Explain potential drug interactions between medications
+- Clarify usage instructions and timing
+- Provide information about side effects and precautions
+- Help with medication adherence strategies
+- Answer questions about the medications' purposes and effects
 
-Be concise and friendly in your responses.`
+IMPORTANT:
+- Base your answers on the actual prescription data provided above
+- If asked about a medication not in their prescriptions, clearly state that
+- Always remind users to consult their healthcare provider for medical advice or concerns
+- Be specific and reference their actual medications, dosages, and schedules
+- If prescription data is incomplete, acknowledge this limitation
+
+Be helpful, clear, and personalized in your responses.`
       },
       ...conversationHistory.map((msg: any) => ({
         role: msg.role,
