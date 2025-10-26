@@ -76,9 +76,14 @@ const MedicineAvailability = () => {
         // For Soul Health (first pharmacy), ensure at least one medicine is unavailable with alternative
         const isSoulHealth = index === 0;
         const medicinesWithAlternatives = medicines.filter(m => alternativeDrugs[m.name]);
-        const forcedUnavailableIndex = isSoulHealth && medicinesWithAlternatives.length > 0 
-          ? medicines.findIndex(m => m.name === medicinesWithAlternatives[0].name)
-          : -1;
+        let forcedUnavailableIndex = -1;
+        if (isSoulHealth) {
+          if (medicinesWithAlternatives.length > 0) {
+            forcedUnavailableIndex = medicines.findIndex(m => m.name === medicinesWithAlternatives[0].name);
+          } else if (medicines.length > 0) {
+            forcedUnavailableIndex = 0; // fallback to first medicine; we'll generate a generic alternative
+          }
+        }
 
         const medicineAvailability: MedicineAvailability[] = medicines.map((medicine, medIndex) => {
           // For Soul Health, force the selected medicine to be unavailable, others are random
@@ -94,13 +99,24 @@ const MedicineAvailability = () => {
           const basePrice = 5 + Math.random() * 10;
           const priceVariation = 1 + (Math.random() * 0.4 - 0.2); // ±20% variation
 
-          // If medicine not available, suggest alternative
-          const shouldSuggestAlternative = !isAvailable && alternativeDrugs[medicine.name];
+          // If medicine not available, suggest alternative.
+          // Guarantee an AI suggestion for the forced-unavailable item at Soul Health even if not in mapping.
+          let alternativeSuggestion: { medicine: string; reason: string } | undefined = undefined;
+          if (!isAvailable) {
+            if (alternativeDrugs[medicine.name]) {
+              alternativeSuggestion = alternativeDrugs[medicine.name];
+            } else if (isSoulHealth && medIndex === forcedUnavailableIndex) {
+              alternativeSuggestion = {
+                medicine: `${medicine.name} Alternative`,
+                reason: "Pharmacist-recommended equivalent available here"
+              };
+            }
+          }
           return {
             name: medicine.name,
             available: isAvailable,
             price: `GH₵ ${(basePrice * priceVariation).toFixed(2)}`,
-            alternative: shouldSuggestAlternative ? alternativeDrugs[medicine.name] : undefined
+            alternative: alternativeSuggestion
           };
         });
         return {
