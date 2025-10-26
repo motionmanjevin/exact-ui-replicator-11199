@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, User, Phone, Mail, MapPin, Bell, Globe, Shield, HelpCircle, LogOut, ChevronRight } from "lucide-react";
+import { ArrowLeft, User, Mail, MapPin, Bell, Globe, LogOut, ChevronRight, Home, Camera, Activity } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -184,21 +184,21 @@ const Profile = () => {
             onClick={() => navigate('/')}
             className="flex flex-col items-center gap-1 text-muted-foreground"
           >
-            <User className="w-6 h-6" />
+            <Home className="w-6 h-6" />
             <span className="text-xs">Home</span>
           </button>
           <button 
             onClick={() => navigate('/upload-prescription')}
             className="flex flex-col items-center gap-1 text-muted-foreground"
           >
-            <User className="w-6 h-6" />
+            <Camera className="w-6 h-6" />
             <span className="text-xs">Scan</span>
           </button>
           <button 
             onClick={() => navigate('/insights')}
             className="flex flex-col items-center gap-1 text-muted-foreground"
           >
-            <User className="w-6 h-6" />
+            <Activity className="w-6 h-6" />
             <span className="text-xs">Insights</span>
           </button>
           <button className="flex flex-col items-center gap-1 text-primary">
