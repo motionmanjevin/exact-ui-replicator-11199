@@ -241,7 +241,7 @@ const Insights = () => {
         <>
           <Button
             onClick={() => setChatOpen(true)}
-            className="fixed bottom-24 right-6 rounded-full w-14 h-14 shadow-lg"
+            className="fixed bottom-6 right-6 rounded-full w-14 h-14 shadow-lg"
             size="icon"
           >
             <MessageCircle className="w-6 h-6" />
