@@ -11,6 +11,10 @@ interface Pharmacy {
   available: boolean;
   price: string;
   medicineName?: string;
+  image?: string;
+  phone?: string;
+  hours?: string;
+  address?: string;
   recommendation?: {
     medicine: string;
     reason: string;
@@ -34,7 +38,9 @@ const PharmacyDetails = () => {
 
   const handleViewMap = () => {
     // Open map view or navigate to map
-    const address = encodeURIComponent(pharmacy.name + " Accra Ghana");
+    const address = pharmacy.address 
+      ? encodeURIComponent(pharmacy.address + ", " + pharmacy.name) 
+      : encodeURIComponent(pharmacy.name + " Accra Ghana");
     window.open(`https://www.google.com/maps/search/?api=1&query=${address}`, '_blank');
   };
 
@@ -60,6 +66,17 @@ const PharmacyDetails = () => {
 
         {/* Content */}
         <div className="p-4 space-y-4">
+          {/* Pharmacy Thumbnail */}
+          {pharmacy.image && (
+            <div className="w-full h-48 rounded-2xl overflow-hidden">
+              <img 
+                src={pharmacy.image} 
+                alt={pharmacy.name}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
+
           {/* Pharmacy Info Card */}
           <Card className="p-6">
             <div className="flex items-start justify-between mb-4">
@@ -86,7 +103,7 @@ const PharmacyDetails = () => {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Phone</p>
-                  <p className="font-medium">+233 XX XXX XXXX</p>
+                  <p className="font-medium">{pharmacy.phone || "+233 XX XXX XXXX"}</p>
                 </div>
               </div>
 
@@ -96,7 +113,7 @@ const PharmacyDetails = () => {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Hours</p>
-                  <p className="font-medium">8:00 AM - 8:00 PM</p>
+                  <p className="font-medium">{pharmacy.hours || "8:00 AM - 8:00 PM"}</p>
                 </div>
               </div>
             </div>

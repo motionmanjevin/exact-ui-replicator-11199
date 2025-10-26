@@ -17,6 +17,10 @@ interface Pharmacy {
   available: boolean;
   price: string;
   medicineName?: string;
+  image?: string;
+  phone?: string;
+  hours?: string;
+  address?: string;
   recommendation?: {
     medicine: string;
     reason: string;
@@ -39,11 +43,15 @@ const MedicineAvailability = () => {
       setPharmacies([
         {
           id: "1",
-          name: "Medi-Pharm Accra",
+          name: "Soul Health Pharmacy",
           distance: "1.2 km away",
           available: true,
           price: "GH₵ 8.50",
           medicineName: firstMedicine,
+          image: "/src/assets/soul-health-pharmacy.jpg",
+          phone: "+233 30 298 3045",
+          hours: "8:00 AM - 4:00 PM",
+          address: "Madina, Greater Accra Region",
         },
         {
           id: "2",
