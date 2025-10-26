@@ -7,16 +7,24 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
+import paracetamolImg from "@/assets/medicines/paracetamol.jpg";
+import ibuprofenImg from "@/assets/medicines/ibuprofen.jpg";
+import amoxicillinImg from "@/assets/medicines/amoxicillin.jpg";
+import aspirinImg from "@/assets/medicines/aspirin.jpg";
+import metforminImg from "@/assets/medicines/metformin.jpg";
+import omeprazoleImg from "@/assets/medicines/omeprazole.jpg";
+import vitaminD3Img from "@/assets/medicines/vitamin-d3.jpg";
+import cetirizineImg from "@/assets/medicines/cetirizine.jpg";
 
 const POPULAR_MEDICINES = [
-  { name: "Paracetamol", icon: "💊" },
-  { name: "Ibuprofen", icon: "💊" },
-  { name: "Amoxicillin", icon: "💊" },
-  { name: "Aspirin", icon: "💊" },
-  { name: "Metformin", icon: "💊" },
-  { name: "Omeprazole", icon: "💊" },
-  { name: "Vitamin D3", icon: "💊" },
-  { name: "Cetirizine", icon: "💊" },
+  { name: "Paracetamol", image: paracetamolImg },
+  { name: "Ibuprofen", image: ibuprofenImg },
+  { name: "Amoxicillin", image: amoxicillinImg },
+  { name: "Aspirin", image: aspirinImg },
+  { name: "Metformin", image: metforminImg },
+  { name: "Omeprazole", image: omeprazoleImg },
+  { name: "Vitamin D3", image: vitaminD3Img },
+  { name: "Cetirizine", image: cetirizineImg },
 ];
 
 const DrugInfo = () => {
@@ -286,8 +294,12 @@ const DrugInfo = () => {
                   }}
                   className="bg-card rounded-2xl p-4 shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-float)] transition-all flex flex-col items-center gap-2"
                 >
-                  <div className="w-16 h-16 rounded-xl bg-muted flex items-center justify-center text-3xl">
-                    {medicine.icon}
+                  <div className="w-16 h-16 rounded-xl bg-muted overflow-hidden flex items-center justify-center">
+                    <img 
+                      src={medicine.image} 
+                      alt={medicine.name}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                   <span className="text-sm font-medium text-center">{medicine.name}</span>
                 </button>
