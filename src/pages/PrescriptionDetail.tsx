@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, Search, Info } from "lucide-react";
+import { ArrowLeft, Search, Info, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +26,7 @@ const PrescriptionDetail = () => {
   const prescriptionData = location.state as PrescriptionState;
   
   const [medicines, setMedicines] = useState<Medicine[]>([]);
+  const [isLoadingDrugInfo, setIsLoadingDrugInfo] = useState(false);
 
   useEffect(() => {
     if (!prescriptionData) {
@@ -56,7 +57,7 @@ const PrescriptionDetail = () => {
     navigate("/medicine-availability", { state: { medicines: selectedMedicines } });
   };
 
-  const handleViewDrugInfo = () => {
+  const handleViewDrugInfo = async () => {
     const selectedMedicines = medicines.filter(med => med.selected);
     if (selectedMedicines.length === 0) {
       toast.error("Please select a medicine");
@@ -66,7 +67,78 @@ const PrescriptionDetail = () => {
       toast.error("Please select only one medicine for drug information");
       return;
     }
-    navigate("/drug-info", { state: { medicineName: selectedMedicines[0].name } });
+
+    const medicineName = selectedMedicines[0].name;
+    setIsLoadingDrugInfo(true);
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/drug-info`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ medicineName }),
+        }
+      );
+
+      if (!response.ok || !response.body) {
+        throw new Error("Failed to start stream");
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let textBuffer = "";
+      let streamDone = false;
+      let accumulatedText = "";
+
+      while (!streamDone) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        textBuffer += decoder.decode(value, { stream: true });
+
+        let newlineIndex: number;
+        while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
+          let line = textBuffer.slice(0, newlineIndex);
+          textBuffer = textBuffer.slice(newlineIndex + 1);
+
+          if (line.endsWith("\r")) line = line.slice(0, -1);
+          if (line.startsWith(":") || line.trim() === "") continue;
+          if (!line.startsWith("data: ")) continue;
+
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === "[DONE]") {
+            streamDone = true;
+            break;
+          }
+
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+            if (content) {
+              accumulatedText += content;
+            }
+          } catch {
+            textBuffer = line + "\n" + textBuffer;
+            break;
+          }
+        }
+      }
+
+      // Navigate with both the medicine name and fetched info
+      navigate("/drug-info", { 
+        state: { 
+          medicineName,
+          preloadedInfo: accumulatedText 
+        } 
+      });
+    } catch (error) {
+      console.error("Error fetching drug info:", error);
+      toast.error("Failed to fetch drug information. Please try again.");
+      setIsLoadingDrugInfo(false);
+    }
   };
 
   const selectedCount = medicines.filter(med => med.selected).length;
@@ -141,16 +213,25 @@ const PrescriptionDetail = () => {
               onClick={handleViewDrugInfo}
               variant="outline"
               className="flex-1"
-              disabled={selectedCount !== 1}
+              disabled={selectedCount !== 1 || isLoadingDrugInfo}
             >
-              <Info className="w-4 h-4 mr-2" />
-              Drug Info
-              {selectedCount > 1 && <span className="text-xs ml-2">(Select 1 only)</span>}
+              {isLoadingDrugInfo ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Loading...
+                </>
+              ) : (
+                <>
+                  <Info className="w-4 h-4 mr-2" />
+                  Drug Info
+                  {selectedCount > 1 && <span className="text-xs ml-2">(Select 1 only)</span>}
+                </>
+              )}
             </Button>
             <Button
               onClick={handleSearchAvailability}
               className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
-              disabled={selectedCount === 0}
+              disabled={selectedCount === 0 || isLoadingDrugInfo}
             >
               <Search className="w-4 h-4 mr-2" />
               Search Availability

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, Search, Loader2, Pill, Volume2, Pause, Play, Camera, Upload, MapPin, Sparkles } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,7 @@ const POPULAR_MEDICINES = [
 
 const DrugInfo = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [drugInfo, setDrugInfo] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
@@ -59,6 +60,17 @@ const DrugInfo = () => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Handle preloaded data from navigation
+  useEffect(() => {
+    const state = location.state as { medicineName?: string; preloadedInfo?: string } | null;
+    if (state?.medicineName && state?.preloadedInfo) {
+      setSearchQuery(state.medicineName);
+      setDrugInfo(state.preloadedInfo);
+      // Clear the state to prevent re-loading on component re-render
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
 
   const fetchSuggestions = async (query: string) => {
     if (query.length < 2) {
