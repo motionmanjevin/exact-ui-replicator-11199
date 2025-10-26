@@ -83,6 +83,22 @@ const Index = () => {
     return { daysLeft, totalDays };
   };
 
+  const getUserDisplayName = () => {
+    if (!session?.user) return "there";
+    
+    // Try to get name from user metadata first
+    const metadata = session.user.user_metadata;
+    if (metadata?.full_name) return metadata.full_name;
+    if (metadata?.name) return metadata.name;
+    
+    // Fallback to email username
+    if (session.user.email) {
+      return session.user.email.split('@')[0];
+    }
+    
+    return "there";
+  };
+
   const getAllMedicines = () => {
     const allMeds: Array<Medicine & { prescriptionDate: string }> = [];
     prescriptions.forEach(prescription => {
@@ -109,7 +125,7 @@ const Index = () => {
         <div className="flex justify-between items-start mb-6">
           <div>
             <p className="text-sm opacity-90 mb-1">Good morning</p>
-            <h1 className="text-2xl font-bold">Hi, Ama</h1>
+            <h1 className="text-2xl font-bold">Hi, {getUserDisplayName()}</h1>
           </div>
           <button className="p-2 hover:bg-white/10 rounded-full transition-colors">
             <Bell className="w-6 h-6" />
