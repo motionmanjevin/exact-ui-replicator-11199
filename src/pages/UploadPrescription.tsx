@@ -61,7 +61,12 @@ const UploadPrescription = () => {
         }
 
         if (data?.medicines && data.medicines.length > 0) {
-          setMedicines(data.medicines);
+          // Deselect all medicines by default after extraction
+          const medicinesWithSelection = data.medicines.map((med: Medicine) => ({
+            ...med,
+            selected: false
+          }));
+          setMedicines(medicinesWithSelection);
           toast({
             title: "Success!",
             description: `Extracted ${data.medicines.length} medicine(s) from prescription`,
@@ -344,7 +349,7 @@ const UploadPrescription = () => {
                 {medicines.map((medicine, index) => (
                   <div key={index} className="bg-card rounded-2xl p-4 shadow-sm flex items-start gap-3">
                     <Checkbox
-                      checked={medicine.selected ?? true}
+                      checked={medicine.selected ?? false}
                       onCheckedChange={() => toggleMedicineSelection(index)}
                       className="mt-1"
                     />

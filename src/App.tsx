@@ -13,6 +13,7 @@ import PharmacyDetails from "./pages/PharmacyDetails";
 import Checkout from "./pages/Checkout";
 import DrugInfo from "./pages/DrugInfo";
 import MyPrescriptions from "./pages/MyPrescriptions";
+import PrescriptionDetail from "./pages/PrescriptionDetail";
 import Insights from "./pages/Insights";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
@@ -35,6 +36,7 @@ const App = () => (
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/drug-info" element={<DrugInfo />} />
           <Route path="/my-prescriptions" element={<MyPrescriptions />} />
+          <Route path="/prescription-detail" element={<PrescriptionDetail />} />
           <Route path="/insights" element={<Insights />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/" element={<Index />} />

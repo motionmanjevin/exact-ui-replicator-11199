@@ -175,17 +175,21 @@ const MyPrescriptions = () => {
                     )}
 
                     <div className="flex gap-2 pt-2">
-                      {prescription.prescription_image_url && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => window.open(prescription.prescription_image_url!, "_blank")}
-                        >
-                          <Eye className="w-4 h-4 mr-2" />
-                          View
-                        </Button>
-                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => navigate("/prescription-detail", {
+                          state: {
+                            id: prescription.id,
+                            name: prescription.prescription_name || "Untitled Prescription",
+                            medicines: Array.isArray(prescription.medicines) ? prescription.medicines : []
+                          }
+                        })}
+                      >
+                        <Eye className="w-4 h-4 mr-2" />
+                        View
+                      </Button>
                       <Button
                         variant="ghost"
                         size="sm"
