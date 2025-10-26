@@ -109,17 +109,6 @@ const Profile = () => {
           </button>
 
           <button className="w-full flex items-center gap-3 p-4 hover:bg-muted/50 transition-colors">
-            <div className="p-2 bg-green-500/10 rounded-lg">
-              <Phone className="w-5 h-5 text-green-500" />
-            </div>
-            <div className="flex-1 text-left">
-              <p className="text-sm text-muted-foreground">Phone Number</p>
-              <p className="font-medium">+233 24 123 4567</p>
-            </div>
-            <ChevronRight className="w-5 h-5 text-muted-foreground" />
-          </button>
-
-          <button className="w-full flex items-center gap-3 p-4 hover:bg-muted/50 transition-colors">
             <div className="p-2 bg-purple-500/10 rounded-lg">
               <Mail className="w-5 h-5 text-purple-500" />
             </div>
