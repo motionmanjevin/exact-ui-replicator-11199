@@ -83,7 +83,7 @@ const Profile = () => {
             <p className="text-xs text-muted-foreground">Prescriptions</p>
           </button>
           <div className="flex flex-col items-center gap-1">
-            <p className="text-2xl font-bold">8</p>
+            <p className="text-2xl font-bold">0</p>
             <p className="text-xs text-muted-foreground">Orders</p>
           </div>
           <div className="flex flex-col items-center gap-1">
