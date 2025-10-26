@@ -284,7 +284,7 @@ const Index = () => {
         {/* Quick Actions */}
         <div className="grid grid-cols-3 gap-4 mb-6">
           <QuickActionCard icon={FileText} label="My Prescriptions" onClick={() => navigate("/my-prescriptions")} />
-          <QuickActionCard icon={MapPin} label="Nearby Pharmacies" />
+          <QuickActionCard icon={MapPin} label="Nearby Pharmacies" onClick={() => window.open('https://maps.app.goo.gl/8XBc7qqyTtDiXa419', '_blank')} />
           <QuickActionCard icon={Pill} label="AI Drug Info" onClick={() => navigate("/drug-info")} />
         </div>
 
