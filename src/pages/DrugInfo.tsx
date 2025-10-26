@@ -235,40 +235,47 @@ const DrugInfo = () => {
       reader.readAsDataURL(file);
       
       reader.onload = async () => {
-        const base64Image = reader.result as string;
+        try {
+          const base64Image = reader.result as string;
 
-        const { data, error } = await supabase.functions.invoke('analyze-medication', {
-          body: { imageBase64: base64Image }
-        });
+          const { data, error } = await supabase.functions.invoke('analyze-medication', {
+            body: { imageBase64: base64Image }
+          });
 
-        if (error) throw error;
+          if (error) throw error;
 
-        // Extract medicine name from the first line or heading
-        const medicationInfo = data.medicationInfo;
-        const firstLine = medicationInfo.split('\n')[0].replace(/^#+\s*/, '').trim();
-        setSearchQuery(firstLine || "Medication from Image");
-        
-        // Simulate typing effect for analyzed medication
-        let currentIndex = 0;
-        const typingInterval = setInterval(() => {
-          if (currentIndex < medicationInfo.length) {
-            setDrugInfo(medicationInfo.slice(0, currentIndex + 1));
-            currentIndex++;
-          } else {
-            clearInterval(typingInterval);
-          }
-        }, 10);
-        
-        toast.success("Medication analyzed successfully!");
+          // Extract medicine name from the first line or heading
+          const medicationInfo = data.medicationInfo;
+          const firstLine = medicationInfo.split('\n')[0].replace(/^#+\s*/, '').trim();
+          setSearchQuery(firstLine || "Medication from Image");
+          
+          // Simulate typing effect for analyzed medication
+          let currentIndex = 0;
+          const typingInterval = setInterval(() => {
+            if (currentIndex < medicationInfo.length) {
+              setDrugInfo(medicationInfo.slice(0, currentIndex + 1));
+              currentIndex++;
+            } else {
+              clearInterval(typingInterval);
+              setIsAnalyzing(false);
+            }
+          }, 10);
+          
+          toast.success("Medication analyzed successfully!");
+        } catch (error) {
+          console.error('Error analyzing medication:', error);
+          toast.error("Failed to analyze medication image");
+          setIsAnalyzing(false);
+        }
       };
 
       reader.onerror = () => {
-        throw new Error("Failed to read image file");
+        toast.error("Failed to read image file");
+        setIsAnalyzing(false);
       };
     } catch (error) {
       console.error('Error analyzing medication:', error);
       toast.error("Failed to analyze medication image");
-    } finally {
       setIsAnalyzing(false);
     }
   };
