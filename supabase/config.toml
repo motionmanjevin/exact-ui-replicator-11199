@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.analyze-medication]
 verify_jwt = false
+
+[functions.prescription-chat]
+verify_jwt = true

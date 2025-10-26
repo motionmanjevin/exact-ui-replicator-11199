@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, TrendingUp, Brain, AlertCircle } from "lucide-react";
+import { ArrowLeft, TrendingUp, Brain, AlertCircle, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { PrescriptionChatDialog } from "@/components/PrescriptionChatDialog";
 
 interface InsightData {
   dailyScore: number;
@@ -20,6 +21,7 @@ const Insights = () => {
   const [loading, setLoading] = useState(true);
   const [insightData, setInsightData] = useState<InsightData | null>(null);
   const [prescriptions, setPrescriptions] = useState<any[]>([]);
+  const [chatOpen, setChatOpen] = useState(false);
 
   useEffect(() => {
     fetchPrescriptionsAndInsights();
@@ -111,6 +113,52 @@ const Insights = () => {
           </Card>
         ) : (
           <>
+            {/* AI Insights */}
+            <Card className="bg-card mb-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Brain className="w-5 h-5 text-primary" />
+                  AI Insights
+                </CardTitle>
+                <CardDescription>Personalized recommendations based on your prescriptions</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {insightData?.insights.map((insight, index) => (
+                    <div key={index} className="flex gap-3 p-3 rounded-lg bg-muted/50">
+                      <div className="mt-1">
+                        <div className="w-2 h-2 rounded-full bg-primary" />
+                      </div>
+                      <p className="text-sm flex-1">{insight}</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Reminders & Warnings */}
+            {insightData?.reminders && insightData.reminders.length > 0 && (
+              <Card className="bg-card mb-6">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <AlertCircle className="w-5 h-5 text-primary" />
+                    Important Reminders
+                  </CardTitle>
+                  <CardDescription>Things to keep in mind</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {insightData.reminders.map((reminder, index) => (
+                      <div key={index} className="flex gap-3 p-3 rounded-lg bg-primary/10 border border-primary/20">
+                        <AlertCircle className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                        <p className="text-sm flex-1">{reminder}</p>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Progress Scores */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <Card className="bg-card">
@@ -154,52 +202,6 @@ const Insights = () => {
               </Card>
             </div>
 
-            {/* AI Insights */}
-            <Card className="bg-card mb-6">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Brain className="w-5 h-5 text-primary" />
-                  AI Insights
-                </CardTitle>
-                <CardDescription>Personalized recommendations based on your prescriptions</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {insightData?.insights.map((insight, index) => (
-                    <div key={index} className="flex gap-3 p-3 rounded-lg bg-muted/50">
-                      <div className="mt-1">
-                        <div className="w-2 h-2 rounded-full bg-primary" />
-                      </div>
-                      <p className="text-sm flex-1">{insight}</p>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Reminders & Warnings */}
-            {insightData?.reminders && insightData.reminders.length > 0 && (
-              <Card className="bg-card">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <AlertCircle className="w-5 h-5 text-primary" />
-                    Important Reminders
-                  </CardTitle>
-                  <CardDescription>Things to keep in mind</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {insightData.reminders.map((reminder, index) => (
-                      <div key={index} className="flex gap-3 p-3 rounded-lg bg-primary/10 border border-primary/20">
-                        <AlertCircle className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                        <p className="text-sm flex-1">{reminder}</p>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
             {/* Prescription Summary */}
             <Card className="bg-card mt-6">
               <CardHeader>
@@ -233,6 +235,25 @@ const Insights = () => {
           </>
         )}
       </main>
+
+      {/* Floating Chat Button */}
+      {!loading && prescriptions.length > 0 && (
+        <>
+          <Button
+            onClick={() => setChatOpen(true)}
+            className="fixed bottom-24 right-6 rounded-full w-14 h-14 shadow-lg"
+            size="icon"
+          >
+            <MessageCircle className="w-6 h-6" />
+          </Button>
+
+          <PrescriptionChatDialog
+            open={chatOpen}
+            onOpenChange={setChatOpen}
+            prescriptions={prescriptions}
+          />
+        </>
+      )}
     </div>
   );
 };
