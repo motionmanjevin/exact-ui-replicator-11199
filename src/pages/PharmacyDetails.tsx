@@ -65,7 +65,13 @@ const PharmacyDetails = () => {
   };
 
   const handleViewMap = () => {
-    // Open map view or navigate to map
+    // Use specific Google Maps link for Soul Health Pharmacy
+    if (pharmacy.name === "Soul Health Pharmacy") {
+      window.open('https://maps.app.goo.gl/GjNHCV3V4fiSQhjs5', '_blank');
+      return;
+    }
+    
+    // Open map view or navigate to map for other pharmacies
     const address = pharmacy.address 
       ? encodeURIComponent(pharmacy.address + ", " + pharmacy.name) 
       : encodeURIComponent(pharmacy.name + " Accra Ghana");
