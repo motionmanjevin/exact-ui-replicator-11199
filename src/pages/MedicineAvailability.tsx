@@ -84,8 +84,8 @@ const MedicineAvailability = () => {
           const basePrice = 5 + Math.random() * 10;
           const priceVariation = 1 + (Math.random() * 0.4 - 0.2); // ±20% variation
           
-          // For closest pharmacy (index 0), if medicine not available, suggest alternative
-          const shouldSuggestAlternative = index === 0 && !isAvailable && alternativeDrugs[medicine.name];
+          // If medicine not available, suggest alternative
+          const shouldSuggestAlternative = !isAvailable && alternativeDrugs[medicine.name];
           
           return {
             name: medicine.name,
