@@ -13,6 +13,8 @@ import { Textarea } from "@/components/ui/textarea";
 interface Medicine {
   name: string;
   dosage: string;
+  frequency: string;
+  amount: string;
   selected?: boolean;
 }
 
@@ -26,10 +28,11 @@ const UploadPrescription = () => {
   const [showManualForm, setShowManualForm] = useState(false);
   const [medicineName, setMedicineName] = useState("");
   const [medicineDosage, setMedicineDosage] = useState("");
+  const [medicineFrequency, setMedicineFrequency] = useState("");
+  const [medicineAmount, setMedicineAmount] = useState("");
   const [showCamera, setShowCamera] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [prescriptionName, setPrescriptionName] = useState("");
-  const [prescriptionNotes, setPrescriptionNotes] = useState("");
   const [showSaveForm, setShowSaveForm] = useState(false);
 
   const handleFileSelect = async (file: File) => {
@@ -111,18 +114,26 @@ const UploadPrescription = () => {
   };
 
   const handleAddMedicine = () => {
-    if (!medicineName.trim() || !medicineDosage.trim()) {
+    if (!medicineName.trim() || !medicineDosage.trim() || !medicineFrequency.trim() || !medicineAmount.trim()) {
       toast({
         title: "Required fields",
-        description: "Please fill in both medicine name and dosage",
+        description: "Please fill in all fields",
         variant: "destructive",
       });
       return;
     }
 
-    setMedicines([...medicines, { name: medicineName, dosage: medicineDosage, selected: true }]);
+    setMedicines([...medicines, { 
+      name: medicineName, 
+      dosage: medicineDosage, 
+      frequency: medicineFrequency,
+      amount: medicineAmount,
+      selected: true 
+    }]);
     setMedicineName("");
     setMedicineDosage("");
+    setMedicineFrequency("");
+    setMedicineAmount("");
     setShowManualForm(false);
     toast({
       title: "Medicine added",
@@ -152,6 +163,8 @@ const UploadPrescription = () => {
   const handleCancel = () => {
     setMedicineName("");
     setMedicineDosage("");
+    setMedicineFrequency("");
+    setMedicineAmount("");
     setShowManualForm(false);
   };
 
@@ -218,7 +231,7 @@ const UploadPrescription = () => {
           prescription_name: prescriptionName,
           prescription_image_url: imageUrl,
           medicines: medicines as any,
-          notes: prescriptionNotes || null,
+          notes: null,
         } as any);
 
       if (insertError) throw insertError;
@@ -338,6 +351,11 @@ const UploadPrescription = () => {
                     <div className="flex-1">
                       <p className="font-medium">{medicine.name}</p>
                       <p className="text-sm text-muted-foreground mt-1">{medicine.dosage}</p>
+                      {medicine.frequency && medicine.amount && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {medicine.amount} • {medicine.frequency}
+                        </p>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -375,16 +393,8 @@ const UploadPrescription = () => {
                   className="mt-2"
                 />
               </div>
-              <div>
-                <Label htmlFor="prescriptionNotes">Notes (Optional)</Label>
-                <Textarea
-                  id="prescriptionNotes"
-                  value={prescriptionNotes}
-                  onChange={(e) => setPrescriptionNotes(e.target.value)}
-                  placeholder="e.g., Take with food"
-                  className="mt-2"
-                  rows={3}
-                />
+              <div className="text-sm text-muted-foreground bg-muted/30 rounded-lg p-3">
+                Make sure to add frequency and amount details to each medicine for reminders and tracking
               </div>
               <div className="flex gap-3 pt-2">
                 <Button
@@ -399,7 +409,6 @@ const UploadPrescription = () => {
                   onClick={() => {
                     setShowSaveForm(false);
                     setPrescriptionName("");
-                    setPrescriptionNotes("");
                   }}
                   variant="ghost"
                   className="flex-1"
@@ -414,7 +423,7 @@ const UploadPrescription = () => {
           {showManualForm && (
             <div className="bg-card rounded-2xl p-6 shadow-sm space-y-4">
               <div>
-                <Label htmlFor="medicineName">Medicine Name</Label>
+                <Label htmlFor="medicineName">Medicine Name *</Label>
                 <Input
                   id="medicineName"
                   value={medicineName}
@@ -424,12 +433,32 @@ const UploadPrescription = () => {
                 />
               </div>
               <div>
-                <Label htmlFor="dosage">Dosage</Label>
+                <Label htmlFor="dosage">Dosage *</Label>
                 <Input
                   id="dosage"
                   value={medicineDosage}
                   onChange={(e) => setMedicineDosage(e.target.value)}
-                  placeholder="e.g., 500mg - 2 tablets twice daily"
+                  placeholder="e.g., 500mg"
+                  className="mt-2"
+                />
+              </div>
+              <div>
+                <Label htmlFor="frequency">Frequency of Intake *</Label>
+                <Input
+                  id="frequency"
+                  value={medicineFrequency}
+                  onChange={(e) => setMedicineFrequency(e.target.value)}
+                  placeholder="e.g., Twice daily"
+                  className="mt-2"
+                />
+              </div>
+              <div>
+                <Label htmlFor="amount">Amount *</Label>
+                <Input
+                  id="amount"
+                  value={medicineAmount}
+                  onChange={(e) => setMedicineAmount(e.target.value)}
+                  placeholder="e.g., 2 tablets"
                   className="mt-2"
                 />
               </div>
