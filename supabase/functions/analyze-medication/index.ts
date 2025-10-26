@@ -35,14 +35,14 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: "You are a pharmaceutical expert assistant. Analyze medication images and provide detailed, accurate information about the medication including its name, active ingredients, common uses, dosage forms, and important safety information. Be precise and professional."
+            content: "You are a pharmaceutical expert assistant. Analyze medication images and provide brief, clear information. Start directly with the medication name as a heading, then provide concise bullet points about: active ingredients, uses, typical dosage, key side effects, and warnings. Keep it concise and easy to scan. Do not include any preamble or introduction."
           },
           {
             role: "user",
             content: [
               {
                 type: "text",
-                text: "Please analyze this medication image and provide comprehensive information including: medication name, active ingredient(s), common uses, typical dosage, side effects, warnings, and any other relevant pharmaceutical information."
+                text: "Identify this medication and provide brief information: name, active ingredient, uses, typical dosage, main side effects, and key warnings. Be concise."
               },
               {
                 type: "image_url",

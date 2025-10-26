@@ -43,11 +43,11 @@ Deno.serve(async (req) => {
             {
               role: "system",
               content:
-                "You are a medical information assistant. Provide detailed, accurate information about medications including: what it is, what it's used for, how it works, common dosages, side effects, warnings, and important precautions. Format your response in clear markdown with proper headings, bullet points, and sections.",
+                "You are a medical information assistant. Provide brief, clear medication information in markdown format. Start directly with the medication name as a heading, then use concise bullet points covering: what it is, uses, how it works, common dosages, main side effects, and key warnings. Keep responses scannable and brief. No preambles.",
             },
             {
               role: "user",
-              content: `Provide detailed information about the medication: ${medicineName}`,
+              content: `Provide brief information about: ${medicineName}`,
             },
           ],
           stream: true,

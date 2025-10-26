@@ -249,6 +249,9 @@ const DrugInfo = () => {
           const firstLine = medicationInfo.split('\n')[0].replace(/^#+\s*/, '').trim();
           setSearchQuery(firstLine || "Medication from Image");
           
+          // Hide loading screen immediately and start typing effect
+          setIsAnalyzing(false);
+          
           // Simulate typing effect for analyzed medication
           let currentIndex = 0;
           const typingInterval = setInterval(() => {
@@ -257,7 +260,6 @@ const DrugInfo = () => {
               currentIndex++;
             } else {
               clearInterval(typingInterval);
-              setIsAnalyzing(false);
             }
           }, 10);
           
@@ -564,40 +566,10 @@ const DrugInfo = () => {
 
       {isAnalyzing && (
         <div className="fixed inset-0 bg-background/95 backdrop-blur-md z-50 flex items-center justify-center p-4">
-          <Card className="w-[90%] max-w-md overflow-hidden border-2 shadow-2xl animate-scale-in">
-            <CardContent className="pt-8 pb-6">
-              <div className="flex flex-col items-center gap-6">
-                <div className="relative">
-                  <div className="absolute inset-0 animate-ping">
-                    <div className="h-16 w-16 rounded-full bg-primary/20"></div>
-                  </div>
-                  <div className="relative h-16 w-16 rounded-full bg-gradient-to-tr from-primary to-primary/50 flex items-center justify-center animate-pulse">
-                    <Sparkles className="w-8 h-8 text-primary-foreground animate-spin" style={{ animationDuration: '3s' }} />
-                  </div>
-                </div>
-                
-                <div className="text-center space-y-2">
-                  <p className="text-xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                    Analyzing Medication
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Our AI is scanning and identifying the medication...
-                  </p>
-                </div>
-                
-                <div className="w-full space-y-2">
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>Processing</span>
-                    <span className="animate-pulse">••••</span>
-                  </div>
-                  <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-                    <div className="h-full bg-gradient-to-r from-primary to-primary/50 rounded-full animate-[slide-right_2s_ease-in-out_infinite]" 
-                         style={{ width: '60%' }}></div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="w-12 h-12 text-primary animate-spin" />
+            <p className="text-sm text-muted-foreground">Analyzing medication...</p>
+          </div>
         </div>
       )}
     </div>
