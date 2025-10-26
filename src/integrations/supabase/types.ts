@@ -14,6 +14,100 @@ export type Database = {
   }
   public: {
     Tables: {
+      medication_reminders: {
+        Row: {
+          created_at: string | null
+          frequency: string
+          id: string
+          is_taken: boolean
+          medicine_name: string
+          prescription_id: string
+          scheduled_time: string
+          taken_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          frequency: string
+          id?: string
+          is_taken?: boolean
+          medicine_name: string
+          prescription_id: string
+          scheduled_time: string
+          taken_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          frequency?: string
+          id?: string
+          is_taken?: boolean
+          medicine_name?: string
+          prescription_id?: string
+          scheduled_time?: string
+          taken_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medication_reminders_prescription_id_fkey"
+            columns: ["prescription_id"]
+            isOneToOne: false
+            referencedRelation: "prescriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      medication_schedules: {
+        Row: {
+          created_at: string | null
+          frequency: string
+          id: string
+          interval_hours: number
+          is_active: boolean
+          medicine_name: string
+          prescription_id: string
+          start_time: string
+          times_per_day: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          frequency: string
+          id?: string
+          interval_hours?: number
+          is_active?: boolean
+          medicine_name: string
+          prescription_id: string
+          start_time: string
+          times_per_day?: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          frequency?: string
+          id?: string
+          interval_hours?: number
+          is_active?: boolean
+          medicine_name?: string
+          prescription_id?: string
+          start_time?: string
+          times_per_day?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medication_schedules_prescription_id_fkey"
+            columns: ["prescription_id"]
+            isOneToOne: false
+            referencedRelation: "prescriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prescriptions: {
         Row: {
           created_at: string
