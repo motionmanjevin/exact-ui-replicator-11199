@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { MessageCircle, Send, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -22,7 +22,30 @@ export const PrescriptionChatDialog = ({ open, onOpenChange, prescriptions }: Pr
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [typingMessage, setTypingMessage] = useState<string>("");
+  const [isTyping, setIsTyping] = useState(false);
   const { toast } = useToast();
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages, typingMessage]);
+
+  const typeMessage = async (message: string) => {
+    setIsTyping(true);
+    setTypingMessage("");
+    
+    for (let i = 0; i < message.length; i++) {
+      await new Promise(resolve => setTimeout(resolve, 20));
+      setTypingMessage(message.substring(0, i + 1));
+    }
+    
+    setMessages((prev) => [...prev, { role: "assistant", content: message }]);
+    setTypingMessage("");
+    setIsTyping(false);
+  };
 
   const sendMessage = async () => {
     if (!input.trim() || loading) return;
@@ -43,16 +66,16 @@ export const PrescriptionChatDialog = ({ open, onOpenChange, prescriptions }: Pr
 
       if (error) throw error;
 
-      setMessages((prev) => [...prev, { role: "assistant", content: data.response }]);
+      setLoading(false);
+      await typeMessage(data.response);
     } catch (error: any) {
       console.error("Error sending message:", error);
+      setLoading(false);
       toast({
         title: "Error",
         description: error.message || "Failed to send message",
         variant: "destructive",
       });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -73,8 +96,8 @@ export const PrescriptionChatDialog = ({ open, onOpenChange, prescriptions }: Pr
           </DialogTitle>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 px-6 py-4">
-          {messages.length === 0 ? (
+        <ScrollArea className="flex-1 px-6 py-4" ref={scrollRef}>
+          {messages.length === 0 && !typingMessage ? (
             <div className="text-center text-muted-foreground py-12">
               <MessageCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <p className="text-sm">Ask me anything about your prescriptions!</p>
@@ -100,7 +123,14 @@ export const PrescriptionChatDialog = ({ open, onOpenChange, prescriptions }: Pr
                   </div>
                 </div>
               ))}
-              {loading && (
+              {typingMessage && (
+                <div className="flex justify-start">
+                  <div className="max-w-[80%] rounded-lg px-4 py-2 bg-muted">
+                    <p className="text-sm whitespace-pre-wrap">{typingMessage}</p>
+                  </div>
+                </div>
+              )}
+              {loading && !isTyping && (
                 <div className="flex justify-start">
                   <div className="bg-muted rounded-lg px-4 py-2">
                     <div className="flex gap-1">
@@ -125,7 +155,7 @@ export const PrescriptionChatDialog = ({ open, onOpenChange, prescriptions }: Pr
               disabled={loading}
               className="flex-1"
             />
-            <Button onClick={sendMessage} disabled={loading || !input.trim()} size="icon">
+            <Button onClick={sendMessage} disabled={loading || isTyping || !input.trim()} size="icon">
               <Send className="w-4 h-4" />
             </Button>
           </div>
