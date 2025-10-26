@@ -74,8 +74,16 @@ const MedicineAvailability = () => {
         const distance = (index + 1) * 1.2 + Math.random() * 0.5;
         const hasAllMedicines = Math.random() > 0.4; // 60% chance of having all medicines
 
-        const medicineAvailability: MedicineAvailability[] = medicines.map(medicine => {
-          const isAvailable = hasAllMedicines || Math.random() > 0.3;
+        // For Soul Health (first pharmacy), ensure at least one medicine is unavailable with alternative
+        const medicinesWithAlternatives = medicines.filter(m => alternativeDrugs[m.name]);
+        const forcedUnavailableIndex = index === 0 && medicinesWithAlternatives.length > 0 
+          ? medicines.findIndex(m => m.name === medicinesWithAlternatives[0].name)
+          : -1;
+
+        const medicineAvailability: MedicineAvailability[] = medicines.map((medicine, medIndex) => {
+          const isAvailable = medIndex === forcedUnavailableIndex 
+            ? false 
+            : hasAllMedicines || Math.random() > 0.3;
           const basePrice = 5 + Math.random() * 10;
           const priceVariation = 1 + (Math.random() * 0.4 - 0.2); // ±20% variation
 
