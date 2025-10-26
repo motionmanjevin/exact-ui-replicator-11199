@@ -1,4 +1,4 @@
-// Edge function for drug information lookup
+// Edge function for drug information lookup with streaming
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -43,13 +43,14 @@ Deno.serve(async (req) => {
             {
               role: "system",
               content:
-                "You are a medical information assistant. Provide detailed, accurate information about medications including: what it is, what it's used for, how it works, common dosages, side effects, warnings, and important precautions. Keep the information clear and well-organized.",
+                "You are a medical information assistant. Provide detailed, accurate information about medications including: what it is, what it's used for, how it works, common dosages, side effects, warnings, and important precautions. Format your response in clear markdown with proper headings, bullet points, and sections.",
             },
             {
               role: "user",
               content: `Provide detailed information about the medication: ${medicineName}`,
             },
           ],
+          stream: true,
         }),
       }
     );
@@ -86,11 +87,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    const data = await response.json();
-    const drugInfo = data.choices[0].message.content;
-
-    return new Response(JSON.stringify({ drugInfo }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    return new Response(response.body, {
+      headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
   } catch (error) {
     console.error("Error in drug-info function:", error);

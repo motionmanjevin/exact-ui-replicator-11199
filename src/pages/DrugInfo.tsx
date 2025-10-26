@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Search, Loader2, Pill } from "lucide-react";
+import { ArrowLeft, Search, Loader2, Pill, Volume2, Pause, Play } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import ReactMarkdown from "react-markdown";
 
 const POPULAR_MEDICINES = [
   { name: "Paracetamol", icon: "💊" },
@@ -26,8 +27,12 @@ const DrugInfo = () => {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [audioUrl, setAudioUrl] = useState<string>("");
   const debounceTimer = useRef<NodeJS.Timeout>();
   const inputRef = useRef<HTMLInputElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -94,15 +99,64 @@ const DrugInfo = () => {
     setIsLoading(true);
     setDrugInfo("");
     setShowSuggestions(false);
+    setAudioUrl("");
 
     try {
-      const { data, error } = await supabase.functions.invoke("drug-info", {
-        body: { medicineName: searchTerm },
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/drug-info`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ medicineName: searchTerm }),
+        }
+      );
 
-      if (error) throw error;
+      if (!response.ok || !response.body) {
+        throw new Error("Failed to start stream");
+      }
 
-      setDrugInfo(data.drugInfo);
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let textBuffer = "";
+      let streamDone = false;
+      let accumulatedText = "";
+
+      while (!streamDone) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        textBuffer += decoder.decode(value, { stream: true });
+
+        let newlineIndex: number;
+        while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
+          let line = textBuffer.slice(0, newlineIndex);
+          textBuffer = textBuffer.slice(newlineIndex + 1);
+
+          if (line.endsWith("\r")) line = line.slice(0, -1);
+          if (line.startsWith(":") || line.trim() === "") continue;
+          if (!line.startsWith("data: ")) continue;
+
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === "[DONE]") {
+            streamDone = true;
+            break;
+          }
+
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+            if (content) {
+              accumulatedText += content;
+              setDrugInfo(accumulatedText);
+            }
+          } catch {
+            textBuffer = line + "\n" + textBuffer;
+            break;
+          }
+        }
+      }
     } catch (error) {
       console.error("Error fetching drug info:", error);
       toast.error("Failed to fetch drug information. Please try again.");
@@ -110,6 +164,49 @@ const DrugInfo = () => {
       setIsLoading(false);
     }
   };
+
+  const handleGenerateAudio = async () => {
+    if (!drugInfo) return;
+
+    setIsGeneratingAudio(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("text-to-speech", {
+        body: { text: drugInfo },
+      });
+
+      if (error) throw error;
+
+      const audioBlob = new Blob(
+        [Uint8Array.from(atob(data.audioContent), (c) => c.charCodeAt(0))],
+        { type: "audio/mpeg" }
+      );
+      const url = URL.createObjectURL(audioBlob);
+      setAudioUrl(url);
+      toast.success("Audio generated successfully!");
+    } catch (error) {
+      console.error("Error generating audio:", error);
+      toast.error("Failed to generate audio. Please try again.");
+    } finally {
+      setIsGeneratingAudio(false);
+    }
+  };
+
+  const toggleAudioPlayback = () => {
+    if (!audioRef.current) return;
+
+    if (isPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play();
+    }
+    setIsPlaying(!isPlaying);
+  };
+
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.onended = () => setIsPlaying(false);
+    }
+  }, [audioUrl]);
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -206,20 +303,51 @@ const DrugInfo = () => {
         )}
 
         {drugInfo && !isLoading && (
-          <Card>
+          <Card className="animate-fade-in">
             <CardHeader>
-              <CardTitle>{searchQuery}</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle>{searchQuery}</CardTitle>
+                <div className="flex gap-2">
+                  {audioUrl && (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={toggleAudioPlayback}
+                      className="rounded-full"
+                    >
+                      {isPlaying ? (
+                        <Pause className="w-4 h-4" />
+                      ) : (
+                        <Play className="w-4 h-4" />
+                      )}
+                    </Button>
+                  )}
+                  <Button
+                    variant="outline"
+                    onClick={handleGenerateAudio}
+                    disabled={isGeneratingAudio}
+                    className="gap-2"
+                  >
+                    {isGeneratingAudio ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Volume2 className="w-4 h-4" />
+                    )}
+                    Generate Audio
+                  </Button>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="prose prose-sm max-w-none">
-                {drugInfo.split("\n").map((paragraph, index) => (
-                  <p key={index} className="mb-3 text-foreground">
-                    {paragraph}
-                  </p>
-                ))}
+              <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-ul:text-foreground prose-ol:text-foreground">
+                <ReactMarkdown>{drugInfo}</ReactMarkdown>
               </div>
             </CardContent>
           </Card>
+        )}
+
+        {audioUrl && (
+          <audio ref={audioRef} src={audioUrl} className="hidden" />
         )}
 
         {!drugInfo && !isLoading && (
