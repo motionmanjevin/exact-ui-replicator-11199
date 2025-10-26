@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { text, voice = "akua" } = await req.json();
+    const { text, language_code = "twi-gh-feli-medium" } = await req.json();
 
     if (!text) {
       return new Response(
@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
       throw new Error("ABENA_AI_API_KEY is not configured");
     }
 
-    console.log("Generating Twi speech with Abena AI for text length:", text.length);
+    console.log("Generating Twi speech with Abena AI, language_code:", language_code);
     
     const response = await fetch(
       "https://abena.mobobi.com/playground/api/v1/tts/synthesize/",
@@ -41,7 +41,7 @@ Deno.serve(async (req) => {
         },
         body: JSON.stringify({
           text: text,
-          voice: voice,
+          language_code: language_code,
         }),
       }
     );
