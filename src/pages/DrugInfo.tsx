@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Search, Loader2, Pill, Volume2, Pause, Play, Camera, Upload, MapPin } from "lucide-react";
+import { ArrowLeft, Search, Loader2, Pill, Volume2, Pause, Play, Camera, Upload, MapPin, Sparkles } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { CameraModal } from "@/components/CameraModal";
+import { Skeleton } from "@/components/ui/skeleton";
 import paracetamolImg from "@/assets/medicines/paracetamol.jpg";
 import ibuprofenImg from "@/assets/medicines/ibuprofen.jpg";
 import amoxicillinImg from "@/assets/medicines/amoxicillin.jpg";
@@ -226,6 +227,8 @@ const DrugInfo = () => {
     setIsAnalyzing(true);
     setShowImageDialog(false);
     setShowCameraModal(false);
+    setDrugInfo("");
+    setSearchQuery("");
 
     try {
       const reader = new FileReader();
@@ -241,7 +244,18 @@ const DrugInfo = () => {
         if (error) throw error;
 
         setSearchQuery("Medication from Image");
-        setDrugInfo(data.medicationInfo);
+        // Simulate typing effect for analyzed medication
+        const medicationInfo = data.medicationInfo;
+        let currentIndex = 0;
+        const typingInterval = setInterval(() => {
+          if (currentIndex < medicationInfo.length) {
+            setDrugInfo(medicationInfo.slice(0, currentIndex + 1));
+            currentIndex++;
+          } else {
+            clearInterval(typingInterval);
+          }
+        }, 10);
+        
         toast.success("Medication analyzed successfully!");
       };
 
@@ -376,60 +390,102 @@ const DrugInfo = () => {
         )}
 
         {isLoading && (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <div className="space-y-4">
+            <Card className="overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-primary/10 to-primary/5">
+                <div className="flex items-center gap-3">
+                  <Skeleton className="h-12 w-12 rounded-full" />
+                  <div className="space-y-2 flex-1">
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-3 w-1/2" />
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-6 space-y-4">
+                <div className="space-y-3">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-5/6" />
+                  <Skeleton className="h-4 w-4/6" />
+                </div>
+                <div className="space-y-3 pt-4">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-2/3" />
+                </div>
+              </CardContent>
+            </Card>
           </div>
         )}
 
         {drugInfo && !isLoading && (
-          <Card className="animate-fade-in">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>{searchQuery}</CardTitle>
-                <div className="flex gap-2">
-                  {audioUrl && (
+          <div className="space-y-4 animate-fade-in">
+            <Card className="overflow-hidden border-2 shadow-lg">
+              <CardHeader className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent">
+                <div className="flex items-center justify-between flex-wrap gap-3">
+                  <div className="flex items-center gap-2">
+                    <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
+                      <Pill className="w-5 h-5 text-primary" />
+                    </div>
+                    <CardTitle className="text-xl">{searchQuery}</CardTitle>
+                  </div>
+                  <div className="flex gap-2 flex-wrap">
+                    {audioUrl && (
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={toggleAudioPlayback}
+                        className="rounded-full"
+                      >
+                        {isPlaying ? (
+                          <Pause className="w-4 h-4" />
+                        ) : (
+                          <Play className="w-4 h-4" />
+                        )}
+                      </Button>
+                    )}
                     <Button
                       variant="outline"
-                      size="icon"
-                      onClick={toggleAudioPlayback}
-                      className="rounded-full"
+                      onClick={handleGenerateAudio}
+                      disabled={isGeneratingAudio}
+                      className="gap-2 text-xs sm:text-sm"
+                      size="sm"
                     >
-                      {isPlaying ? (
-                        <Pause className="w-4 h-4" />
+                      {isGeneratingAudio ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
                       ) : (
-                        <Play className="w-4 h-4" />
+                        <Volume2 className="w-4 h-4" />
                       )}
+                      <span className="hidden sm:inline">Generate Audio</span>
+                      <span className="sm:hidden">Audio</span>
                     </Button>
-                  )}
-                  <Button
-                    variant="outline"
-                    onClick={handleGenerateAudio}
-                    disabled={isGeneratingAudio}
-                    className="gap-2"
-                  >
-                    {isGeneratingAudio ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Volume2 className="w-4 h-4" />
-                    )}
-                    Generate Audio
-                  </Button>
+                  </div>
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-ul:text-foreground prose-ol:text-foreground">
-                <ReactMarkdown>{drugInfo}</ReactMarkdown>
-              </div>
-              <Button
-                onClick={handleCheckAvailability}
-                className="w-full gap-2"
-              >
-                <MapPin className="w-4 h-4" />
-                Check Availability in Nearby Pharmacies
-              </Button>
-            </CardContent>
-          </Card>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <div className="prose prose-sm max-w-none dark:prose-invert 
+                  prose-headings:text-foreground prose-headings:font-bold prose-headings:mb-3 prose-headings:mt-6 first:prose-headings:mt-0
+                  prose-h2:text-lg prose-h2:bg-gradient-to-r prose-h2:from-primary/10 prose-h2:to-transparent prose-h2:p-3 prose-h2:rounded-lg prose-h2:border-l-4 prose-h2:border-primary
+                  prose-h3:text-base prose-h3:text-primary
+                  prose-p:text-foreground prose-p:leading-relaxed prose-p:mb-4
+                  prose-strong:text-foreground prose-strong:font-semibold
+                  prose-ul:text-foreground prose-ul:space-y-2 prose-ul:my-4
+                  prose-ol:text-foreground prose-ol:space-y-2 prose-ol:my-4
+                  prose-li:text-foreground prose-li:leading-relaxed
+                  [&>*:first-child]:mt-0">
+                  <ReactMarkdown>{drugInfo}</ReactMarkdown>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Button
+              onClick={handleCheckAvailability}
+              className="w-full gap-2 h-auto py-4 text-sm sm:text-base"
+              size="lg"
+            >
+              <MapPin className="w-4 h-4 flex-shrink-0" />
+              <span className="break-words">Check Availability in Nearby Pharmacies</span>
+            </Button>
+          </div>
         )}
 
         {audioUrl && (
@@ -489,15 +545,38 @@ const DrugInfo = () => {
       />
 
       {isAnalyzing && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
-          <Card className="w-[90%] max-w-md">
-            <CardContent className="pt-6">
-              <div className="flex flex-col items-center gap-4">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                <p className="text-lg font-medium">Analyzing medication...</p>
-                <p className="text-sm text-muted-foreground text-center">
-                  Our AI is identifying the medication and gathering information
-                </p>
+        <div className="fixed inset-0 bg-background/95 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <Card className="w-[90%] max-w-md overflow-hidden border-2 shadow-2xl animate-scale-in">
+            <CardContent className="pt-8 pb-6">
+              <div className="flex flex-col items-center gap-6">
+                <div className="relative">
+                  <div className="absolute inset-0 animate-ping">
+                    <div className="h-16 w-16 rounded-full bg-primary/20"></div>
+                  </div>
+                  <div className="relative h-16 w-16 rounded-full bg-gradient-to-tr from-primary to-primary/50 flex items-center justify-center animate-pulse">
+                    <Sparkles className="w-8 h-8 text-primary-foreground animate-spin" style={{ animationDuration: '3s' }} />
+                  </div>
+                </div>
+                
+                <div className="text-center space-y-2">
+                  <p className="text-xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                    Analyzing Medication
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Our AI is scanning and identifying the medication...
+                  </p>
+                </div>
+                
+                <div className="w-full space-y-2">
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>Processing</span>
+                    <span className="animate-pulse">••••</span>
+                  </div>
+                  <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                    <div className="h-full bg-gradient-to-r from-primary to-primary/50 rounded-full animate-[slide-right_2s_ease-in-out_infinite]" 
+                         style={{ width: '60%' }}></div>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
