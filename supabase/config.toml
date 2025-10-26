@@ -2,3 +2,18 @@ project_id = "twxcjjoyszmkzwnnquog"
 
 [functions.prescription-insights]
 verify_jwt = true
+
+[functions.drug-autocomplete]
+verify_jwt = false
+
+[functions.drug-info]
+verify_jwt = false
+
+[functions.extract-prescription]
+verify_jwt = true
+
+[functions.text-to-speech]
+verify_jwt = false
+
+[functions.analyze-medication]
+verify_jwt = false

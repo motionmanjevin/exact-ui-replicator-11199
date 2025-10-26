@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Search, Loader2, Pill, Volume2, Pause, Play } from "lucide-react";
+import { ArrowLeft, Search, Loader2, Pill, Volume2, Pause, Play, Camera, Upload } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
@@ -41,6 +42,10 @@ const DrugInfo = () => {
   const debounceTimer = useRef<NodeJS.Timeout>();
   const inputRef = useRef<HTMLInputElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const [showImageDialog, setShowImageDialog] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -216,6 +221,50 @@ const DrugInfo = () => {
     }
   }, [audioUrl]);
 
+  const handleImageAnalysis = async (file: File) => {
+    setIsAnalyzing(true);
+    setShowImageDialog(false);
+
+    try {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      
+      reader.onload = async () => {
+        const base64Image = reader.result as string;
+
+        const { data, error } = await supabase.functions.invoke('analyze-medication', {
+          body: { imageBase64: base64Image }
+        });
+
+        if (error) throw error;
+
+        setSearchQuery("Medication from Image");
+        setDrugInfo(data.medicationInfo);
+        toast.success("Medication analyzed successfully!");
+      };
+
+      reader.onerror = () => {
+        throw new Error("Failed to read image file");
+      };
+    } catch (error) {
+      console.error('Error analyzing medication:', error);
+      toast.error("Failed to analyze medication image");
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        toast.error("Please select an image file");
+        return;
+      }
+      handleImageAnalysis(file);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background pb-20">
       {/* Header */}
@@ -228,6 +277,14 @@ const DrugInfo = () => {
             <ArrowLeft className="w-6 h-6" />
           </button>
           <h1 className="text-2xl font-bold">AI Drug Information</h1>
+          <Button
+            onClick={() => setShowImageDialog(true)}
+            variant="outline"
+            size="icon"
+            className="bg-white/10 border-white/20 hover:bg-white/20 text-white ml-auto"
+          >
+            <Camera className="w-5 h-5" />
+          </Button>
         </div>
 
         {/* Search Bar */}
@@ -368,6 +425,66 @@ const DrugInfo = () => {
           </div>
         )}
       </main>
+
+      <Dialog open={showImageDialog} onOpenChange={setShowImageDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Analyze Medication</DialogTitle>
+            <DialogDescription>
+              Take a photo or upload an image of your medication to get AI-powered information
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <Button
+              onClick={() => cameraInputRef.current?.click()}
+              className="w-full h-24 flex flex-col gap-2"
+              variant="outline"
+            >
+              <Camera className="w-8 h-8" />
+              <span>Take Photo</span>
+            </Button>
+            <Button
+              onClick={() => fileInputRef.current?.click()}
+              className="w-full h-24 flex flex-col gap-2"
+              variant="outline"
+            >
+              <Upload className="w-8 h-8" />
+              <span>Upload Image</span>
+            </Button>
+          </div>
+          <input
+            ref={cameraInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={handleFileSelect}
+          />
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleFileSelect}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {isAnalyzing && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
+          <Card className="w-[90%] max-w-md">
+            <CardContent className="pt-6">
+              <div className="flex flex-col items-center gap-4">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                <p className="text-lg font-medium">Analyzing medication...</p>
+                <p className="text-sm text-muted-foreground text-center">
+                  Our AI is identifying the medication and gathering information
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 };
