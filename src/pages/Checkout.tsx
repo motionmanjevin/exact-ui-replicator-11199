@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import LocationPicker from "@/components/LocationPicker";
 
 interface Pharmacy {
   id: string;
@@ -31,6 +32,7 @@ const Checkout = () => {
     fullName: "",
     phone: "",
     deliveryAddress: "",
+    deliveryCoordinates: null as [number, number] | null,
     notes: "",
   });
 
@@ -48,17 +50,32 @@ const Checkout = () => {
     });
   };
 
+  const handleLocationSelect = (address: string, coordinates: [number, number]) => {
+    setFormData({
+      ...formData,
+      deliveryAddress: address,
+      deliveryCoordinates: coordinates,
+    });
+  };
+
   const handlePlaceOrder = () => {
     if (!formData.fullName || !formData.phone || !formData.deliveryAddress) {
       toast({
         title: "Missing Information",
-        description: "Please fill in all required fields",
+        description: "Please fill in all required fields including delivery location",
         variant: "destructive",
       });
       return;
     }
 
     // Handle order placement logic here
+    console.log("Order details:", {
+      ...formData,
+      pharmacy: pharmacy.name,
+      medicine: pharmacy.medicineName,
+      price: pharmacy.price,
+    });
+
     toast({
       title: "Order Placed!",
       description: `Your order from ${pharmacy.name} has been confirmed.`,
@@ -136,15 +153,17 @@ const Checkout = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="deliveryAddress">Delivery Address *</Label>
-                <Textarea
-                  id="deliveryAddress"
-                  name="deliveryAddress"
-                  value={formData.deliveryAddress}
-                  onChange={handleInputChange}
-                  placeholder="Enter your delivery address"
-                  rows={3}
+                <Label>Delivery Location *</Label>
+                <LocationPicker
+                  onLocationSelect={handleLocationSelect}
+                  initialAddress={formData.deliveryAddress}
                 />
+                {formData.deliveryAddress && (
+                  <div className="flex items-start gap-2 p-3 bg-muted/50 rounded-lg">
+                    <MapPin className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                    <p className="text-sm">{formData.deliveryAddress}</p>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
