@@ -125,7 +125,10 @@ const Index = () => {
             <Activity className="w-6 h-6" />
             <span className="text-xs">Insights</span>
           </button>
-          <button className="flex flex-col items-center gap-1 text-muted-foreground">
+          <button 
+            onClick={() => navigate('/profile')}
+            className="flex flex-col items-center gap-1 text-muted-foreground"
+          >
             <User className="w-6 h-6" />
             <span className="text-xs">Profile</span>
           </button>
