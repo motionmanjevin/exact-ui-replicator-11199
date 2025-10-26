@@ -183,10 +183,9 @@ const MedicineAvailability = () => {
                       <p className="font-semibold">{pharmacy.price}</p>
                     </div>
                     <Button
-                      disabled={!pharmacy.available}
-                      className={pharmacy.available ? "bg-green-600 hover:bg-green-700" : ""}
+                      onClick={() => navigate('/pharmacy-details', { state: { pharmacy } })}
                     >
-                      Order Now
+                      Details
                     </Button>
                   </div>
                 </div>
