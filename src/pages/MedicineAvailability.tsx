@@ -180,14 +180,6 @@ const MedicineAvailability = () => {
                       </Badge>
                     </div>
 
-                    {/* Medicine Tags */}
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {pharmacy.medicines.map((med, idx) => (
-                        <Badge key={idx} variant="outline" className={med.available ? "bg-green-50 border-green-200 text-green-700" : "bg-gray-50 border-gray-200 text-gray-500"}>
-                          {med.name} {med.available ? "✓" : "✗"}
-                        </Badge>
-                      ))}
-                    </div>
 
                     {/* AI Recommendations */}
                     {hasAlternatives && <div className="space-y-2 mb-3">
