@@ -64,7 +64,7 @@ const Index = () => {
         {/* Quick Actions */}
         <div className="grid grid-cols-3 gap-4 mb-6">
           <QuickActionCard icon={FileText} label="My Prescriptions" onClick={() => navigate("/my-prescriptions")} />
-          <QuickActionCard icon={MapPin} label="Nearby Pharmacies" />
+          <QuickActionCard icon={FileText} label="Prescription History" onClick={() => navigate("/my-prescriptions")} />
           <QuickActionCard icon={Pill} label="AI Drug Info" onClick={() => navigate("/drug-info")} />
         </div>
 
