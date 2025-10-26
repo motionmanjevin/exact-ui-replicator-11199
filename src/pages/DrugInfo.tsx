@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Search, Loader2, Pill, Volume2, Pause, Play, Camera, Upload } from "lucide-react";
+import { ArrowLeft, Search, Loader2, Pill, Volume2, Pause, Play, Camera, Upload, MapPin } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
+import { CameraModal } from "@/components/CameraModal";
 import paracetamolImg from "@/assets/medicines/paracetamol.jpg";
 import ibuprofenImg from "@/assets/medicines/ibuprofen.jpg";
 import amoxicillinImg from "@/assets/medicines/amoxicillin.jpg";
@@ -43,9 +44,9 @@ const DrugInfo = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const [showImageDialog, setShowImageDialog] = useState(false);
+  const [showCameraModal, setShowCameraModal] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -224,6 +225,7 @@ const DrugInfo = () => {
   const handleImageAnalysis = async (file: File) => {
     setIsAnalyzing(true);
     setShowImageDialog(false);
+    setShowCameraModal(false);
 
     try {
       const reader = new FileReader();
@@ -263,6 +265,14 @@ const DrugInfo = () => {
       }
       handleImageAnalysis(file);
     }
+  };
+
+  const handleCameraCapture = (file: File) => {
+    handleImageAnalysis(file);
+  };
+
+  const handleCheckAvailability = () => {
+    navigate(`/medicine-availability?medicine=${encodeURIComponent(searchQuery)}`);
   };
 
   return (
@@ -407,10 +417,17 @@ const DrugInfo = () => {
                 </div>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-ul:text-foreground prose-ol:text-foreground">
                 <ReactMarkdown>{drugInfo}</ReactMarkdown>
               </div>
+              <Button
+                onClick={handleCheckAvailability}
+                className="w-full gap-2"
+              >
+                <MapPin className="w-4 h-4" />
+                Check Availability in Nearby Pharmacies
+              </Button>
             </CardContent>
           </Card>
         )}
@@ -436,7 +453,10 @@ const DrugInfo = () => {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <Button
-              onClick={() => cameraInputRef.current?.click()}
+              onClick={() => {
+                setShowImageDialog(false);
+                setShowCameraModal(true);
+              }}
               className="w-full h-24 flex flex-col gap-2"
               variant="outline"
             >
@@ -453,14 +473,6 @@ const DrugInfo = () => {
             </Button>
           </div>
           <input
-            ref={cameraInputRef}
-            type="file"
-            accept="image/*"
-            capture="environment"
-            className="hidden"
-            onChange={handleFileSelect}
-          />
-          <input
             ref={fileInputRef}
             type="file"
             accept="image/*"
@@ -469,6 +481,12 @@ const DrugInfo = () => {
           />
         </DialogContent>
       </Dialog>
+
+      <CameraModal
+        open={showCameraModal}
+        onClose={() => setShowCameraModal(false)}
+        onCapture={handleCameraCapture}
+      />
 
       {isAnalyzing && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
