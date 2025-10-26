@@ -1,12 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Bell, FileText, MapPin, Pill, Home, ScanLine, Activity, User } from "lucide-react";
+import { Search, Bell, FileText, MapPin, Pill, Home, ScanLine, Activity, User, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import QuickActionCard from "@/components/QuickActionCard";
 import MedicationCard from "@/components/MedicationCard";
 import ReminderCard from "@/components/ReminderCard";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
+import { toast } from "sonner";
 
 interface Medicine {
   name: string;
@@ -27,6 +28,12 @@ const Index = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isLoadingDrugInfo, setIsLoadingDrugInfo] = useState(false);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Set up auth state listener
@@ -49,7 +56,19 @@ const Index = () => {
       }
     });
 
-    return () => subscription.unsubscribe();
+    // Click outside handler for search suggestions
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+
+    return () => {
+      subscription.unsubscribe();
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, [navigate]);
 
   const fetchPrescriptions = async () => {
@@ -114,6 +133,99 @@ const Index = () => {
     return allMeds;
   };
 
+  const handleSearchChange = async (value: string) => {
+    setSearchQuery(value);
+    
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    if (value.trim().length < 2) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    searchTimeoutRef.current = setTimeout(async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('drug-autocomplete', {
+          body: { query: value }
+        });
+
+        if (error) throw error;
+        
+        if (data?.suggestions && Array.isArray(data.suggestions)) {
+          setSuggestions(data.suggestions);
+          setShowSuggestions(true);
+        }
+      } catch (error) {
+        console.error('Error fetching autocomplete:', error);
+      }
+    }, 300);
+  };
+
+  const handleDrugSelect = async (drugName: string) => {
+    setSearchQuery(drugName);
+    setShowSuggestions(false);
+    setIsLoadingDrugInfo(true);
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/drug-info`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+          },
+          body: JSON.stringify({ medicineName: drugName })
+        }
+      );
+
+      if (!response.ok || !response.body) {
+        throw new Error('Failed to fetch drug information');
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let drugInfo = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') continue;
+
+            try {
+              const parsed = JSON.parse(data);
+              const content = parsed.choices?.[0]?.delta?.content;
+              if (content) {
+                drugInfo += content;
+              }
+            } catch (e) {
+              console.error('Error parsing SSE data:', e);
+            }
+          }
+        }
+      }
+
+      navigate('/drug-info', {
+        state: { medicineName: drugName, drugInfo }
+      });
+    } catch (error) {
+      console.error('Error fetching drug info:', error);
+      toast.error('Failed to fetch drug information');
+    } finally {
+      setIsLoadingDrugInfo(false);
+    }
+  };
+
   if (!session) {
     return null;
   }
@@ -133,12 +245,37 @@ const Index = () => {
         </div>
 
         {/* Search Bar */}
-        <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+        <div ref={searchContainerRef} className="relative">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground z-10" />
           <Input
+            value={searchQuery}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
             placeholder="Search for medication"
             className="pl-12 h-12 bg-white border-0 rounded-2xl text-foreground placeholder:text-muted-foreground"
+            disabled={isLoadingDrugInfo}
           />
+          {isLoadingDrugInfo && (
+            <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary animate-spin" />
+          )}
+          
+          {/* Autocomplete Suggestions */}
+          {showSuggestions && suggestions.length > 0 && (
+            <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-lg border border-border max-h-60 overflow-y-auto z-20">
+              {suggestions.map((suggestion, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleDrugSelect(suggestion)}
+                  className="w-full text-left px-4 py-3 hover:bg-muted transition-colors first:rounded-t-2xl last:rounded-b-2xl border-b border-border last:border-b-0"
+                >
+                  <div className="flex items-center gap-3">
+                    <Pill className="w-4 h-4 text-primary flex-shrink-0" />
+                    <span className="text-sm font-medium text-foreground">{suggestion}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </header>
 
