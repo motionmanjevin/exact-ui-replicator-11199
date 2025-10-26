@@ -16,6 +16,7 @@ interface Pharmacy {
   distance: string;
   available: boolean;
   price: string;
+  medicineName?: string;
   recommendation?: {
     medicine: string;
     reason: string;
@@ -34,6 +35,7 @@ const MedicineAvailability = () => {
   useEffect(() => {
     // Simulate fetching pharmacy data
     setTimeout(() => {
+      const firstMedicine = medicines[0]?.name || "Medicine";
       setPharmacies([
         {
           id: "1",
@@ -41,6 +43,7 @@ const MedicineAvailability = () => {
           distance: "1.2 km away",
           available: true,
           price: "GH₵ 8.50",
+          medicineName: firstMedicine,
         },
         {
           id: "2",
@@ -48,6 +51,7 @@ const MedicineAvailability = () => {
           distance: "3.1 km away",
           available: false,
           price: "GH₵ 8.00",
+          medicineName: firstMedicine,
           recommendation: {
             medicine: "Acetaminophen 500mg",
             reason: "Same active compound",
@@ -59,11 +63,12 @@ const MedicineAvailability = () => {
           distance: "4.5 km away",
           available: true,
           price: "GH₵ 9.00",
+          medicineName: firstMedicine,
         },
       ]);
       setIsLoading(false);
     }, 1000);
-  }, []);
+  }, [medicines]);
 
   const filteredPharmacies = pharmacies.filter(pharmacy =>
     pharmacy.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -155,7 +160,7 @@ const MedicineAvailability = () => {
                       variant={pharmacy.available ? "default" : "destructive"}
                       className={pharmacy.available ? "bg-green-500/10 text-green-600 border-green-200" : ""}
                     >
-                      {pharmacy.available ? "Available" : "Out of Stock"}
+                      {pharmacy.medicineName || "Medicine"}
                     </Badge>
                   </div>
 
