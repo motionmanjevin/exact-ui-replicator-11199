@@ -4,17 +4,30 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
+interface MedicineAvailability {
+  name: string;
+  available: boolean;
+  price: string;
+  alternative?: {
+    medicine: string;
+    reason: string;
+  };
+}
+
 interface Pharmacy {
   id: string;
   name: string;
-  distance: string;
-  available: boolean;
-  price: string;
-  medicineName?: string;
+  distance?: number;
+  distanceText?: string;
+  medicines?: MedicineAvailability[];
   image?: string;
   phone?: string;
   hours?: string;
   address?: string;
+  // Legacy properties for backward compatibility
+  available?: boolean;
+  price?: string;
+  medicineName?: string;
   recommendation?: {
     medicine: string;
     reason: string;
@@ -30,6 +43,21 @@ const PharmacyDetails = () => {
     navigate(-1);
     return null;
   }
+
+  // Check if we're using the new medicines array structure or legacy structure
+  const hasMedicinesArray = pharmacy.medicines && pharmacy.medicines.length > 0;
+  const availableMedicines = hasMedicinesArray 
+    ? pharmacy.medicines!.filter(m => m.available) 
+    : [];
+  const hasAvailableMedicines = hasMedicinesArray 
+    ? availableMedicines.length > 0 
+    : pharmacy.available ?? false;
+  
+  const totalPrice = hasMedicinesArray
+    ? availableMedicines.reduce((sum, m) => sum + parseFloat(m.price.replace("GH₵ ", "")), 0).toFixed(2)
+    : pharmacy.price || "0.00";
+
+  const displayDistance = pharmacy.distanceText || pharmacy.distance?.toFixed(1) + " km away" || "N/A";
 
   const handleOrderNow = () => {
     navigate('/checkout', { state: { pharmacy } });
@@ -83,14 +111,16 @@ const PharmacyDetails = () => {
                 <h2 className="text-2xl font-bold">{pharmacy.name}</h2>
                 <div className="flex items-center gap-1 text-sm text-muted-foreground mt-2">
                   <MapPin className="w-4 h-4" />
-                  <span>{pharmacy.distance}</span>
+                  <span>{displayDistance}</span>
                 </div>
               </div>
               <Badge
-                variant={pharmacy.available ? "default" : "destructive"}
-                className={pharmacy.available ? "bg-green-500/10 text-green-600 border-green-200" : ""}
+                variant={hasAvailableMedicines ? "default" : "destructive"}
+                className={hasAvailableMedicines ? "bg-green-500/10 text-green-600 border-green-200" : ""}
               >
-                {pharmacy.available ? "Available" : "Out of Stock"}
+                {hasMedicinesArray 
+                  ? `${availableMedicines.length}/${pharmacy.medicines!.length} Available`
+                  : (hasAvailableMedicines ? "Available" : "Out of Stock")}
               </Badge>
             </div>
 
@@ -117,8 +147,44 @@ const PharmacyDetails = () => {
               </div>
             </div>
 
-            {/* Medicine Info */}
-            {pharmacy.medicineName && (
+            {/* Medicine Info - New structure */}
+            {hasMedicinesArray && (
+              <div className="space-y-3 mb-6">
+                <p className="text-sm font-semibold text-muted-foreground">Medicines</p>
+                {pharmacy.medicines!.map((med, idx) => (
+                  <div key={idx} className={`rounded-xl p-4 ${med.available ? 'bg-green-50 border border-green-200' : 'bg-muted/50 border border-border'}`}>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="font-semibold">{med.name}</p>
+                        <Badge 
+                          variant={med.available ? "default" : "secondary"}
+                          className={med.available ? "bg-green-500/10 text-green-600 border-green-200 mt-1" : "mt-1"}
+                        >
+                          {med.available ? "In Stock" : "Out of Stock"}
+                        </Badge>
+                      </div>
+                      {med.available && (
+                        <p className="text-xl font-bold text-primary">{med.price}</p>
+                      )}
+                    </div>
+                    {med.alternative && (
+                      <div className="mt-3 pt-3 border-t border-orange-200">
+                        <p className="text-xs font-medium text-orange-900 mb-1">AI Alternative</p>
+                        <p className="text-sm font-semibold text-orange-800">{med.alternative.medicine}</p>
+                        <p className="text-xs text-orange-600 mt-1">{med.alternative.reason}</p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+                <div className="bg-primary/5 rounded-xl p-4">
+                  <p className="text-sm text-muted-foreground mb-1">Total Price (Available Items)</p>
+                  <p className="text-2xl font-bold text-primary">GH₵ {totalPrice}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Legacy Medicine Info */}
+            {!hasMedicinesArray && pharmacy.medicineName && (
               <div className="bg-muted/50 rounded-xl p-4 mb-6">
                 <p className="text-sm text-muted-foreground mb-1">Medicine</p>
                 <p className="font-semibold text-lg">{pharmacy.medicineName}</p>
@@ -126,8 +192,8 @@ const PharmacyDetails = () => {
               </div>
             )}
 
-            {/* Recommendation */}
-            {pharmacy.recommendation && (
+            {/* Legacy Recommendation */}
+            {!hasMedicinesArray && pharmacy.recommendation && (
               <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 mb-6">
                 <p className="text-sm font-medium text-orange-900 mb-1">AI Recommendation</p>
                 <p className="font-semibold text-orange-800">{pharmacy.recommendation.medicine}</p>
@@ -147,8 +213,8 @@ const PharmacyDetails = () => {
               </Button>
               <Button
                 onClick={handleOrderNow}
-                disabled={!pharmacy.available}
-                className={pharmacy.available ? "bg-green-600 hover:bg-green-700 w-full" : "w-full"}
+                disabled={!hasAvailableMedicines}
+                className={hasAvailableMedicines ? "bg-green-600 hover:bg-green-700 w-full" : "w-full"}
               >
                 Order Now
               </Button>

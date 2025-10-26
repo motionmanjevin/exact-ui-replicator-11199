@@ -243,9 +243,12 @@ const DrugInfo = () => {
 
         if (error) throw error;
 
-        setSearchQuery("Medication from Image");
-        // Simulate typing effect for analyzed medication
+        // Extract medicine name from the first line or heading
         const medicationInfo = data.medicationInfo;
+        const firstLine = medicationInfo.split('\n')[0].replace(/^#+\s*/, '').trim();
+        setSearchQuery(firstLine || "Medication from Image");
+        
+        // Simulate typing effect for analyzed medication
         let currentIndex = 0;
         const typingInterval = setInterval(() => {
           if (currentIndex < medicationInfo.length) {
@@ -286,7 +289,15 @@ const DrugInfo = () => {
   };
 
   const handleCheckAvailability = () => {
-    navigate(`/medicine-availability?medicine=${encodeURIComponent(searchQuery)}`);
+    const medicineName = searchQuery || "Medication";
+    navigate('/medicine-availability', {
+      state: {
+        medicines: [{
+          name: medicineName,
+          dosage: "As prescribed"
+        }]
+      }
+    });
   };
 
   return (
