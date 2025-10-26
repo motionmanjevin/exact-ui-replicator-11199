@@ -1,4 +1,4 @@
-// Edge function for text-to-speech using ElevenLabs
+// Edge function for text-to-speech using Abena AI for Twi language
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { text } = await req.json();
+    const { text, voice = "akua" } = await req.json();
 
     if (!text) {
       return new Response(
@@ -24,36 +24,31 @@ Deno.serve(async (req) => {
       );
     }
 
-    const ELEVENLABS_API_KEY = Deno.env.get("ELEVENLABS_API_KEY");
-    if (!ELEVENLABS_API_KEY) {
-      throw new Error("ELEVENLABS_API_KEY is not configured");
+    const ABENA_AI_API_KEY = Deno.env.get("ABENA_AI_API_KEY");
+    if (!ABENA_AI_API_KEY) {
+      throw new Error("ABENA_AI_API_KEY is not configured");
     }
 
-    // Using Aria voice (9BWtsMINqrJLrRacOk9x) with eleven_turbo_v2_5 model
-    const voiceId = "9BWtsMINqrJLrRacOk9x";
+    console.log("Generating Twi speech with Abena AI for text length:", text.length);
     
     const response = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
+      "https://abena.mobobi.com/playground/api/v1/tts/synthesize/",
       {
         method: "POST",
         headers: {
-          "xi-api-key": ELEVENLABS_API_KEY,
+          "Authorization": `Bearer ${ABENA_AI_API_KEY}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           text: text,
-          model_id: "eleven_turbo_v2_5",
-          voice_settings: {
-            stability: 0.5,
-            similarity_boost: 0.75,
-          },
+          voice: voice,
         }),
       }
     );
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("ElevenLabs API error:", response.status, errorText);
+      console.error("Abena AI API error:", response.status, errorText);
       return new Response(
         JSON.stringify({ error: "Failed to generate speech" }),
         {
