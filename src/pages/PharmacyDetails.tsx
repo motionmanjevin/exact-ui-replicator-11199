@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import pharmacyPlaceholder from "@/assets/soul-health-pharmacy.jpg";
 
 interface MedicineAvailability {
   name: string;
@@ -94,15 +95,13 @@ const PharmacyDetails = () => {
         {/* Content */}
         <div className="p-4 space-y-4">
           {/* Pharmacy Thumbnail */}
-          {pharmacy.image && (
-            <div className="w-full h-48 rounded-2xl overflow-hidden">
-              <img 
-                src={pharmacy.image} 
-                alt={pharmacy.name}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          )}
+          <div className="w-full h-48 rounded-2xl overflow-hidden">
+            <img 
+              src={pharmacy.image || pharmacyPlaceholder} 
+              alt={pharmacy.name}
+              className="w-full h-full object-cover"
+            />
+          </div>
 
           {/* Pharmacy Info Card */}
           <Card className="p-6">
