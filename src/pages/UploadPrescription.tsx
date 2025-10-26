@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { ArrowLeft, Upload, Camera, Plus } from "lucide-react";
+import { ArrowLeft, Upload, Camera, Plus, Save } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { CameraModal } from "@/components/CameraModal";
+import { Textarea } from "@/components/ui/textarea";
 
 interface Medicine {
   name: string;
@@ -26,6 +27,10 @@ const UploadPrescription = () => {
   const [medicineName, setMedicineName] = useState("");
   const [medicineDosage, setMedicineDosage] = useState("");
   const [showCamera, setShowCamera] = useState(false);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [prescriptionName, setPrescriptionName] = useState("");
+  const [prescriptionNotes, setPrescriptionNotes] = useState("");
+  const [showSaveForm, setShowSaveForm] = useState(false);
 
   const handleFileSelect = async (file: File) => {
     if (!file.type.startsWith("image/")) {
@@ -38,6 +43,7 @@ const UploadPrescription = () => {
     }
 
     setIsProcessing(true);
+    setUploadedFile(file);
     try {
       const reader = new FileReader();
       reader.onloadend = async () => {
@@ -149,6 +155,93 @@ const UploadPrescription = () => {
     setShowManualForm(false);
   };
 
+  const handleSavePrescription = async () => {
+    if (!prescriptionName.trim()) {
+      toast({
+        title: "Name Required",
+        description: "Please enter a prescription name",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (medicines.length === 0) {
+      toast({
+        title: "No Medicines",
+        description: "Please add at least one medicine",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Authentication Required",
+          description: "Please log in to save prescriptions",
+          variant: "destructive",
+        });
+        navigate("/login");
+        return;
+      }
+
+      let imageUrl = null;
+
+      // Upload image if available
+      if (uploadedFile) {
+        const fileExt = uploadedFile.name.split('.').pop();
+        const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('prescription-images')
+          .upload(fileName, uploadedFile);
+
+        if (uploadError) {
+          console.error("Upload error:", uploadError);
+          throw uploadError;
+        }
+
+        const { data: urlData } = supabase.storage
+          .from('prescription-images')
+          .getPublicUrl(fileName);
+        
+        imageUrl = urlData.publicUrl;
+      }
+
+      // Save prescription to database
+      const { error: insertError } = await supabase
+        .from('prescriptions')
+        .insert({
+          user_id: user.id,
+          prescription_name: prescriptionName,
+          prescription_image_url: imageUrl,
+          medicines: medicines as any,
+          notes: prescriptionNotes || null,
+        } as any);
+
+      if (insertError) throw insertError;
+
+      toast({
+        title: "Prescription Saved!",
+        description: "Your prescription has been saved successfully",
+      });
+
+      // Navigate to my prescriptions
+      setTimeout(() => navigate("/my-prescriptions"), 1500);
+    } catch (error) {
+      console.error("Error saving prescription:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save prescription. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-2xl mx-auto p-6">
@@ -249,13 +342,72 @@ const UploadPrescription = () => {
                   </div>
                 ))}
               </div>
-              <Button
-                onClick={handleSearchPharmacies}
-                className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
-              >
-                Search Pharmacies
-              </Button>
+              <div className="flex gap-3">
+                <Button
+                  onClick={handleSearchPharmacies}
+                  className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
+                >
+                  Search Pharmacies
+                </Button>
+                <Button
+                  onClick={() => setShowSaveForm(!showSaveForm)}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  Save Prescription
+                </Button>
+              </div>
             </>
+          )}
+
+          {/* Save Prescription Form */}
+          {showSaveForm && medicines.length > 0 && (
+            <div className="bg-card rounded-2xl p-6 shadow-sm space-y-4">
+              <h3 className="font-semibold">Save to My Prescriptions</h3>
+              <div>
+                <Label htmlFor="prescriptionName">Prescription Name *</Label>
+                <Input
+                  id="prescriptionName"
+                  value={prescriptionName}
+                  onChange={(e) => setPrescriptionName(e.target.value)}
+                  placeholder="e.g., Monthly Prescription"
+                  className="mt-2"
+                />
+              </div>
+              <div>
+                <Label htmlFor="prescriptionNotes">Notes (Optional)</Label>
+                <Textarea
+                  id="prescriptionNotes"
+                  value={prescriptionNotes}
+                  onChange={(e) => setPrescriptionNotes(e.target.value)}
+                  placeholder="e.g., Take with food"
+                  className="mt-2"
+                  rows={3}
+                />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <Button
+                  onClick={handleSavePrescription}
+                  disabled={isProcessing}
+                  className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  Save
+                </Button>
+                <Button
+                  onClick={() => {
+                    setShowSaveForm(false);
+                    setPrescriptionName("");
+                    setPrescriptionNotes("");
+                  }}
+                  variant="ghost"
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
           )}
 
           {/* Manual Form */}
