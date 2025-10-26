@@ -72,18 +72,25 @@ const MedicineAvailability = () => {
       };
       const simulatedPharmacies: Pharmacy[] = pharmacyNames.slice(0, 6).map((name, index) => {
         const distance = (index + 1) * 1.2 + Math.random() * 0.5;
-        const hasAllMedicines = Math.random() > 0.4; // 60% chance of having all medicines
-
+        
         // For Soul Health (first pharmacy), ensure at least one medicine is unavailable with alternative
+        const isSoulHealth = index === 0;
         const medicinesWithAlternatives = medicines.filter(m => alternativeDrugs[m.name]);
-        const forcedUnavailableIndex = index === 0 && medicinesWithAlternatives.length > 0 
+        const forcedUnavailableIndex = isSoulHealth && medicinesWithAlternatives.length > 0 
           ? medicines.findIndex(m => m.name === medicinesWithAlternatives[0].name)
           : -1;
 
         const medicineAvailability: MedicineAvailability[] = medicines.map((medicine, medIndex) => {
-          const isAvailable = medIndex === forcedUnavailableIndex 
-            ? false 
-            : hasAllMedicines || Math.random() > 0.3;
+          // For Soul Health, force the selected medicine to be unavailable, others are random
+          // For other pharmacies, use standard random logic
+          let isAvailable: boolean;
+          if (isSoulHealth) {
+            isAvailable = medIndex === forcedUnavailableIndex ? false : Math.random() > 0.3;
+          } else {
+            const hasAllMedicines = Math.random() > 0.4;
+            isAvailable = hasAllMedicines || Math.random() > 0.3;
+          }
+          
           const basePrice = 5 + Math.random() * 10;
           const priceVariation = 1 + (Math.random() * 0.4 - 0.2); // ±20% variation
 
