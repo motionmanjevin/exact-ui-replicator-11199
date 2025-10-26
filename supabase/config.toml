@@ -1,1 +1,4 @@
 project_id = "twxcjjoyszmkzwnnquog"
+
+[functions.prescription-insights]
+verify_jwt = true

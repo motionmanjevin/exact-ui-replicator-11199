@@ -118,7 +118,10 @@ const Index = () => {
             <ScanLine className="w-6 h-6" />
             <span className="text-xs">Scan</span>
           </button>
-          <button className="flex flex-col items-center gap-1 text-muted-foreground">
+          <button 
+            onClick={() => navigate("/insights")}
+            className="flex flex-col items-center gap-1 text-muted-foreground"
+          >
             <Activity className="w-6 h-6" />
             <span className="text-xs">Insights</span>
           </button>
