@@ -61,14 +61,30 @@ const DrugInfo = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Handle preloaded data from navigation
+  // Handle preloaded data from navigation with typing effect
   useEffect(() => {
     const state = location.state as { medicineName?: string; preloadedInfo?: string } | null;
     if (state?.medicineName && state?.preloadedInfo) {
       setSearchQuery(state.medicineName);
-      setDrugInfo(state.preloadedInfo);
+      
+      // Trigger typing effect
+      const fullText = state.preloadedInfo;
+      let currentIndex = 0;
+      setDrugInfo("");
+      
+      const typingInterval = setInterval(() => {
+        if (currentIndex < fullText.length) {
+          setDrugInfo(fullText.slice(0, currentIndex + 1));
+          currentIndex++;
+        } else {
+          clearInterval(typingInterval);
+        }
+      }, 10); // 10ms per character for smooth typing
+      
       // Clear the state to prevent re-loading on component re-render
       window.history.replaceState({}, document.title);
+      
+      return () => clearInterval(typingInterval);
     }
   }, [location]);
 
